@@ -21,7 +21,7 @@ const KEYS = {
   keys: 'domino-dupla.keys',
   session: 'domino-dupla.online.v1',
   seenRules: 'domino-dupla.seen-rules',
-  admin: 'domino-dupla.admin.v2',
+  admin: 'domino-dupla.admin.v3',
 };
 const FINISH_LABEL = {
   simples: 'batida simples',
@@ -735,9 +735,39 @@ function showMenu() {
 // No site, liga pelo link pessoal do administrador (pasta paulo-adm/), que abre
 // o jogo com ?adm=<chave>; ?adm=0 desliga. No app, onde não há link, liga
 // tocando 7 vezes na versão da tela inicial e digitando a chave.
-// Fica guardado neste aparelho.
 const ADMIN_KEY = 'pwxos7no';
-const isAdmin = () => loadJson(KEYS.admin) === true;
+// No navegador, o modo vale só para a aba aberta pelo link do administrador
+// (sessionStorage): o link normal nunca mostra as ferramentas, nem no aparelho
+// do administrador, e não vaza para outros sites do mesmo domínio. No app
+// Android, que tem armazenamento próprio, fica guardado.
+function adminStore() {
+  return isNativeApp() ? localStorage : sessionStorage;
+}
+
+function isAdmin() {
+  try {
+    return adminStore().getItem(KEYS.admin) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setAdmin(on) {
+  try {
+    if (on) adminStore().setItem(KEYS.admin, '1');
+    else adminStore().removeItem(KEYS.admin);
+  } catch {
+    // sem armazenamento: o modo simplesmente não fica ligado
+  }
+}
+
+// Marcações antigas, que deixavam o modo ligado para sempre no aparelho.
+try {
+  localStorage.removeItem('domino-dupla.admin');
+  localStorage.removeItem('domino-dupla.admin.v2');
+} catch {
+  // ignora
+}
 
 function canPickTiles() {
   if (!isAdmin()) return false;
@@ -937,8 +967,8 @@ const params = new URLSearchParams(location.search);
 const invited = params.get('sala');
 if (params.has('adm')) {
   const value = params.get('adm');
-  if (value === ADMIN_KEY) saveJson(KEYS.admin, true);
-  else if (value === '0') saveJson(KEYS.admin, null);
+  if (value === ADMIN_KEY) setAdmin(true);
+  else if (value === '0') setAdmin(false);
   params.delete('adm');
   history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
 }
@@ -955,10 +985,10 @@ $('.version').addEventListener('click', () => {
   const code = prompt('Código de administrador (0 desliga):');
   if (code === null) return;
   if (code.trim() === ADMIN_KEY) {
-    saveJson(KEYS.admin, true);
+    setAdmin(true);
     homeMessage('🧪 Modo administrador ativo (menu ☰ → Escolher minhas pedras)');
   } else if (code.trim() === '0') {
-    saveJson(KEYS.admin, null);
+    setAdmin(false);
     homeMessage('Modo administrador desligado');
   } else {
     homeMessage('Código incorreto');

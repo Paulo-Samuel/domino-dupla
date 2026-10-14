@@ -53,7 +53,7 @@ Bom saber:
 
 ## Modo administrador
 
-O administrador tem um link pessoal: a pasta `paulo-adm/` (`https://paulo-samuel.github.io/domino-dupla/paulo-adm/`). Abrindo por ela, o jogo entra no modo administrador naquele aparelho; dá para instalar essa página na Tela de Início como o app **Dominó ADM**, que sempre abre como administrador. O jogo normal não tem nenhum outro jeito de ligar o modo (`?adm=0` desliga).
+O administrador tem um link pessoal: a pasta `paulo-adm/` (`https://paulo-samuel.github.io/domino-dupla/paulo-adm/`). Abrindo por ela, o jogo entra no modo administrador só naquela aba (o link normal nunca mostra as ferramentas, nem no aparelho do administrador); dá para instalar essa página na Tela de Início como o app **Dominó ADM**, que sempre abre como administrador. O jogo normal não tem nenhum outro jeito de ligar o modo (`?adm=0` desliga).
 
 Com o modo ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras (no máximo 4 buchas), o resto é sorteado e a rodada recomeça sem pontuar a anterior. Com **📌 Manter essas pedras** (ligado por padrão), você recebe as mesmas pedras em todas as rodadas até a partida acabar; **Soltar pedras fixas** volta ao sorteio. A nova rodada vale pontos normalmente e não aparece nenhum aviso para os outros jogadores. Funciona contra o computador e, no online, só para o anfitrião (também na sala de espera, valendo para a primeira rodada).
 
