@@ -86,11 +86,14 @@ export function layoutBoard(board, halfWidth = 7) {
 function pipsSvg(value, x, y, size) {
   const r = size * 0.1;
   return PIP_SPOTS[value]
-    .map(([px, py]) => `<circle class="pip" cx="${x + px * size}" cy="${y + py * size}" r="${r}"/>`)
+    .map(([px, py]) => `<circle class="pip" fill="#1d1b18" cx="${x + px * size}" cy="${y + py * size}" r="${r}"/>`)
     .join('');
 }
 
 // Desenha uma pedra no sistema de coordenadas atual (a = metade esquerda/de cima).
+// As cores vão também como atributos do SVG, para a pedra aparecer mesmo se o
+// CSS falhar; a sombra é um retângulo (o Safari pode sumir com elementos SVG
+// que usam filter: drop-shadow).
 export function tileSvg({ x, y, w, h, a, b }, extraClass = '') {
   const vertical = h > w;
   const half = vertical ? w : h;
@@ -99,10 +102,12 @@ export function tileSvg({ x, y, w, h, a, b }, extraClass = '') {
   const bx = vertical ? x : x + half;
   const by = vertical ? y + half : y;
   const divider = vertical
-    ? `<line class="divider" x1="${x + half * 0.15}" y1="${y + half}" x2="${x + w - half * 0.15}" y2="${y + half}"/>`
-    : `<line class="divider" x1="${x + half}" y1="${y + half * 0.15}" x2="${x + half}" y2="${y + h - half * 0.15}"/>`;
+    ? `<line class="divider" stroke="#9b917a" stroke-width="${half * 0.045}" x1="${x + half * 0.15}" y1="${y + half}" x2="${x + w - half * 0.15}" y2="${y + half}"/>`
+    : `<line class="divider" stroke="#9b917a" stroke-width="${half * 0.045}" x1="${x + half}" y1="${y + half * 0.15}" x2="${x + half}" y2="${y + h - half * 0.15}"/>`;
+  const body = `x="${x + inset / 2}" y="${y + inset / 2}" width="${w - inset}" height="${h - inset}" rx="${half * 0.14}"`;
   return `<g class="tile ${extraClass}">
-    <rect class="tile-body" x="${x + inset / 2}" y="${y + inset / 2}" width="${w - inset}" height="${h - inset}" rx="${half * 0.14}"/>
+    <rect class="tile-shadow" fill="rgba(0,0,0,.35)" transform="translate(0 ${half * 0.05})" ${body}/>
+    <rect class="tile-body" fill="#fbf7ec" stroke="#d9d0b8" stroke-width="${half * 0.04}" ${body}/>
     ${divider}
     ${pipsSvg(a, ax, ay, half)}${pipsSvg(b, bx, by, half)}
   </g>`;
@@ -148,5 +153,6 @@ export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: s
 
 export function singleTileSvg(tile, vertical = true) {
   const box = vertical ? { x: 0, y: 0, w: 1, h: 2 } : { x: 0, y: 0, w: 2, h: 1 };
-  return `<svg viewBox="0 0 ${box.w} ${box.h}" xmlns="http://www.w3.org/2000/svg">${tileSvg({ ...box, a: tile[0], b: tile[1] })}</svg>`;
+  // width fixo é só o tamanho reserva sem CSS; o CSS usa width 100% e altura automática.
+  return `<svg width="${box.w * 20}" viewBox="0 0 ${box.w} ${box.h}" xmlns="http://www.w3.org/2000/svg">${tileSvg({ ...box, a: tile[0], b: tile[1] })}</svg>`;
 }

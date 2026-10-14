@@ -245,14 +245,15 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
   display: grid; place-items: center;
   overflow: hidden;
 }
-.board-svg { width: 100%; height: 100%; display: block; }
+/* Posição absoluta: no Safari, altura em % dentro da grade pode virar zero. */
+.board-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .board-empty { color: var(--ink-soft); text-align: center; padding: 20px; font-size: 14px; }
 .board-empty b { color: var(--gold); }
 
-.tile-body { fill: var(--ivory); stroke: var(--ivory-edge); stroke-width: .04; filter: drop-shadow(0 .05px .08px rgba(0,0,0,.5)); }
+.tile-body { fill: var(--ivory); stroke: var(--ivory-edge); }
 .divider { stroke: #9b917a; stroke-width: .045; stroke-linecap: round; }
 .pip { fill: var(--pip); }
-.tile.fresh .tile-body { fill: #fff3c4; stroke: var(--gold); stroke-width: .08; }
+.tile.fresh .tile-body { fill: #fff3c4; stroke: var(--gold); }
 .tile.fresh { animation: drop .35s ease-out; }
 
 .anchor { cursor: pointer; }
@@ -282,11 +283,12 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 }
 .hand-tile {
   width: min(12vw, 50px);
-  aspect-ratio: 1 / 2;
   padding: 0; border: 0; background: none;
   transition: transform .15s, opacity .15s, filter .15s;
 }
-.hand-tile svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* Altura automática pela proporção do desenho: no Safari, height: 100% dentro
+   de um <button> pode virar zero e a pedra some. */
+.hand-tile svg { width: 100%; height: auto; display: block; overflow: visible; }
 .hand-tile.playable { transform: translateY(-6px); filter: drop-shadow(0 0 6px rgba(255, 209, 102, .7)); }
 .hand-tile.dim { opacity: .45; }
 .hand-tile.selected { transform: translateY(-14px) scale(1.06); filter: drop-shadow(0 0 8px var(--gold)); }
@@ -318,8 +320,8 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .team-us .reveal-name { color: #0f8f84; }
 .team-them .reveal-name { color: #d9541f; }
 .reveal-tiles { display: flex; flex-wrap: wrap; gap: 3px; }
-.mini-tile { width: 34px; height: 17px; }
-.mini-tile svg { width: 100%; height: 100%; display: block; }
+.mini-tile { display: inline-block; width: 34px; }
+.mini-tile svg { width: 100%; height: auto; display: block; }
 .mini-tile .tile-body { stroke: #b9ae94; }
 .empty-hand { font-size: 12px; font-weight: 700; color: #0f8f84; }
 
@@ -350,9 +352,8 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .pick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
 .modal .pick-tile {
   padding: 4px; border-radius: 8px; border: 2px solid transparent; background: #ece6d8;
-  aspect-ratio: 2 / 1;
 }
-.modal .pick-tile svg { width: 100%; height: 100%; display: block; }
+.modal .pick-tile svg { width: 100%; height: auto; display: block; }
 .modal .pick-tile.on { border-color: #12513b; background: #c9e9dc; }
 
 /* ---------- Animações ---------- */

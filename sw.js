@@ -1,6 +1,6 @@
 // Cache do app para jogar offline. Busca primeiro na rede (para todos jogarem
 // sempre a versão mais nova) e usa o cache quando estiver sem internet.
-const CACHE = 'domino-dupla-v6';
+const CACHE = 'domino-dupla-v7';
 const ASSETS = [
   './',
   'index.html',
