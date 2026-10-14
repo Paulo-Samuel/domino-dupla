@@ -410,7 +410,7 @@ function renderGame() {
   const myTeam = teamOf(view.seat);
   $('#score-us').textContent = view.scores[myTeam];
   $('#score-them').textContent = view.scores[1 - myTeam];
-  $('#round-tag').textContent = `${view.test ? '🧪 Rodada de teste · ' : ''}Rodada ${view.roundNo} · até ${view.target}`;
+  $('#round-tag').textContent = `Rodada ${view.roundNo} · até ${view.target}`;
 
   const banner = $('#net-banner');
   const netText = mode === 'online' ? {
@@ -709,7 +709,7 @@ function showTilePicker(onClose) {
   };
   openModal(`
     <h3>🧪 Escolher minhas pedras</h3>
-    <p class="small">Toque nas pedras que você quer receber (até ${HAND_SIZE}). As que faltarem e as mãos dos outros são sorteadas. A rodada atual é descartada sem pontuar${mode === 'online' ? ' e todos na sala veem que é uma rodada de teste' : ''}.</p>
+    <p class="small">Toque nas pedras que você quer receber (até ${HAND_SIZE}). As que faltarem e as mãos dos outros são sorteadas. A rodada atual é descartada sem pontuar e a nova vale normalmente.</p>
     <p class="pick-count">Escolhidas: <b id="pick-count">0/${HAND_SIZE}</b></p>
     <div class="pick-grid">${deck.map((t) => `<button class="pick-tile" data-id="${tileId(t)}" aria-label="Pedra ${t[0]} e ${t[1]}">${singleTileSvg(t, false)}</button>`).join('')}</div>
     <button class="primary" id="deal-btn">Dar as pedras</button>

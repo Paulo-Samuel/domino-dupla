@@ -42,7 +42,7 @@ Bom saber:
 
 ## Modo teste (administrador)
 
-Abra o site com `?teste=1` no fim do endereço (ex.: `https://paulo-samuel.github.io/Wand-Enhancer/?teste=1`) para ligar o modo teste nesse aparelho; `?teste=0` desliga. Com ele ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras, o resto é sorteado e a rodada recomeça sem pontuar a anterior. Funciona contra o computador e, no online, só para o anfitrião. Rodadas assim aparecem como **🧪 Rodada de teste** para todos na mesa.
+Abra o site com `?teste=1` no fim do endereço (ex.: `https://paulo-samuel.github.io/Wand-Enhancer/?teste=1`) para ligar o modo teste nesse aparelho; `?teste=0` desliga. Com ele ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras, o resto é sorteado e a rodada recomeça sem pontuar a anterior. A nova rodada vale pontos normalmente e não aparece nenhum aviso para os outros jogadores. Funciona contra o computador e, no online, só para o anfitrião.
 
 ## Publicar (GitHub Pages)
 

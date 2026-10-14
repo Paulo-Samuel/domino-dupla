@@ -49,7 +49,7 @@ test('modo teste: redistribui com as pedras escolhidas sem pontuar a rodada desc
   engine.pause();
   const view = engine.view(0);
   assert.equal(view.roundNo, 1);
-  assert.equal(view.test, true);
+  assert.equal('test' in view, false); // nada indica aos outros que as pedras foram escolhidas
   for (const id of ['3-3', '2-5', '1-4']) assert.ok(view.hand.map(tileId).includes(id));
   assert.deepEqual(view.scores, [0, 0]);
 });

@@ -135,7 +135,6 @@ export class GameEngine {
       lastAction: round.lastAction,
       seq: round.seq,
       result: round.result ? { ...round.result, hands: round.hands.map((h) => h.slice()) } : null,
-      test: !!round.test,
     };
   }
 }

@@ -89,7 +89,6 @@ export function startRound(match, rng = Math.random, { preset = null } = {}) {
     result: null,
     // Conta as ações da rodada; a interface usa para saber o que é novidade.
     seq: 0,
-    test: !!preset,
   };
   return match;
 }

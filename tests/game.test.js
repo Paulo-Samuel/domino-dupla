@@ -157,7 +157,7 @@ test('layout da mesa não sobrepõe pedras', () => {
   }
 });
 
-test('modo teste: o jogador recebe as pedras escolhidas e a rodada fica marcada', () => {
+test('modo teste: o jogador recebe as pedras escolhidas', () => {
   const match = createMatch();
   startRound(match, seeded(5), { preset: { seat: 2, tiles: ['6-6', '5-5', '0-1'] } });
   const ids = match.round.hands[2].map(tileId);
@@ -165,6 +165,5 @@ test('modo teste: o jogador recebe as pedras escolhidas e a rodada fica marcada'
   assert.equal(match.round.hands.every((h) => h.length === 7), true);
   const all = match.round.hands.flat().map(tileId);
   assert.equal(new Set(all).size, 28);
-  assert.equal(match.round.test, true);
   assert.equal(match.round.turn, 2); // tem a 6|6
 });
