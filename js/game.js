@@ -4,6 +4,8 @@
 export const TARGET_SCORE = 4;
 export const PLAYER_COUNT = 4;
 export const HAND_SIZE = 7;
+// Ninguém recebe mais de 4 buchas: com 5 ou mais, as pedras são embaralhadas de novo.
+export const MAX_DOUBLES = 4;
 export const TOTAL_PIPS = 168;
 
 export const POINTS = {
@@ -56,26 +58,56 @@ export function createMatch() {
   };
 }
 
+export const countDoubles = (hand) => hand.filter(isDouble).length;
+
+// Escolha do modo teste já ajustada às regras: até 7 pedras e até 4 buchas.
+export function sanitizePreset(tiles) {
+  const out = [];
+  let doubles = 0;
+  for (const raw of tiles) {
+    if (out.length >= HAND_SIZE || !/^[0-6]-[0-6]$/.test(raw)) continue;
+    const tile = raw.split('-').map(Number);
+    const id = tileId(tile);
+    if (out.includes(id)) continue;
+    if (isDouble(tile)) {
+      if (doubles >= MAX_DOUBLES) continue;
+      doubles += 1;
+    }
+    out.push(id);
+  }
+  return out;
+}
+
+function dealHands(rng, preset) {
+  const fixed = preset ? sanitizePreset(preset.tiles) : [];
+  const fixedSet = new Set(fixed);
+  const rest = createDeck().filter((t) => !fixedSet.has(tileId(t)));
+  for (let attempt = 0; ; attempt++) {
+    const deck = shuffle(rest, rng);
+    const hands = [[], [], [], []];
+    if (preset) hands[preset.seat] = fixed.map((id) => id.split('-').map(Number));
+    for (let p = 0; p < PLAYER_COUNT; p++) {
+      while (hands[p].length < HAND_SIZE) hands[p].push(deck.pop());
+    }
+    if (hands.every((h) => countDoubles(h) <= MAX_DOUBLES) || attempt > 500) return hands.map(sortHand);
+  }
+}
+
 // preset (modo teste): { seat, tiles: ['6-6', '3-5', ...] } escolhe as
 // pedras de um jogador; o que faltar até 7 e as outras mãos saem no sorteio.
 export function startRound(match, rng = Math.random, { preset = null } = {}) {
-  let deck = shuffle(createDeck(), rng);
-  const hands = [[], [], [], []];
-  if (preset) {
-    const wanted = new Set(preset.tiles.slice(0, HAND_SIZE));
-    hands[preset.seat] = deck.filter((t) => wanted.has(tileId(t)));
-    deck = deck.filter((t) => !wanted.has(tileId(t)));
-  }
-  for (let p = 0; p < PLAYER_COUNT; p++) {
-    while (hands[p].length < HAND_SIZE) hands[p].push(deck.pop());
-    hands[p] = sortHand(hands[p]);
-  }
+  const hands = dealHands(rng, preset);
 
   let turn = match.starter;
   let mustOpenWith = null;
+  // Depois da primeira rodada, a dupla vencedora sai: qualquer um dos dois
+  // parceiros pode jogar a primeira pedra.
+  let openers = null;
   if (turn === null) {
     turn = hands.findIndex((hand) => hand.some((t) => t[0] === 6 && t[1] === 6));
     mustOpenWith = '6-6';
+  } else {
+    openers = [turn, partnerOf(turn)];
   }
 
   match.roundNo += 1;
@@ -84,6 +116,7 @@ export function startRound(match, rng = Math.random, { preset = null } = {}) {
     board: null,
     turn,
     mustOpenWith,
+    openers,
     passed: [[], [], [], []],
     lastAction: null,
     result: null,
@@ -166,10 +199,27 @@ function isBlocked(round) {
   return true;
 }
 
+// É a vez do jogador? Na saída da dupla vencedora, vale para os dois parceiros.
+export function canAct(round, player) {
+  if (!round || round.result) return false;
+  if (round.turn === player) return true;
+  return !round.board && !!round.openers?.includes(player);
+}
+
+// Na saída, um parceiro deixa o outro sair.
+export function handOverOpening(match, player) {
+  const round = match.round;
+  if (!round || round.board || !round.openers?.includes(player)) throw new Error('Não é a saída da dupla');
+  round.turn = partnerOf(player);
+  round.openers = null;
+  round.seq += 1;
+  return match;
+}
+
 export function playMove(match, player, move) {
   const round = match.round;
   if (!round || round.result) throw new Error('Rodada encerrada');
-  if (round.turn !== player) throw new Error('Não é a vez deste jogador');
+  if (!canAct(round, player)) throw new Error('Não é a vez deste jogador');
 
   const legal = legalMoves(round, player).some(
     (m) => sameTile(m.tile, move.tile) && m.side === move.side,
@@ -184,6 +234,7 @@ export function playMove(match, player, move) {
   hand.splice(index, 1);
   round.board = placeTile(round.board, tile, move.side);
   round.mustOpenWith = null;
+  round.openers = null;
   round.lastAction = { player, type: 'play', tile: tile.slice(), side: move.side };
   round.seq += 1;
 

@@ -53,3 +53,21 @@ test('modo teste: redistribui com as pedras escolhidas sem pontuar a rodada desc
   for (const id of ['3-3', '2-5', '1-4']) assert.ok(view.hand.map(tileId).includes(id));
   assert.deepEqual(view.scores, [0, 0]);
 });
+
+test('saída da dupla: robô espera o parceiro humano decidir, e entrega a saída quando pedido', async () => {
+  const s = [
+    { kind: 'human', name: 'Eu', online: true },
+    { kind: 'bot', name: 'B1', online: true },
+    { kind: 'bot', name: 'B2', online: true },
+    { kind: 'bot', name: 'B3', online: true },
+  ];
+  const engine = new GameEngine({ seats: s, delay: 5 });
+  engine.match.starter = 2; // meu parceiro robô bateu
+  engine.begin();
+  await new Promise((r) => setTimeout(r, 40));
+  assert.equal(engine.match.round.seq, 0); // ninguém jogou: esperando eu decidir
+  assert.ok(engine.handOver(0, 0));
+  await new Promise((r) => setTimeout(r, 40));
+  engine.pause();
+  assert.ok(engine.match.round.board); // o parceiro saiu
+});

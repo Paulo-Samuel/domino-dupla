@@ -30,7 +30,8 @@ Bom saber:
 ## Regras
 
 - 28 pedras (duplo-seis), 7 para cada jogador, sem monte.
-- A primeira rodada começa com quem tem a **bucha de sena (6|6)**; nas seguintes, quem venceu a rodada anterior abre com qualquer pedra.
+- Ninguém recebe mais de **4 buchas**: com 5 ou mais, as pedras são embaralhadas de novo.
+- A primeira rodada começa com quem tem a **bucha de sena (6|6)**; nas seguintes, a **dupla que venceu sai**: qualquer um dos dois parceiros joga a primeira pedra, com qualquer pedra (ou deixa o parceiro sair).
 - A vez passa para a direita. Sem pedra que sirva, o jogador passa.
 - Pontos de quem bate (fica sem pedras):
   - batida simples — 1
@@ -42,7 +43,7 @@ Bom saber:
 
 ## Modo teste (administrador)
 
-Abra o site com `?teste=1` no fim do endereço (ex.: `https://paulo-samuel.github.io/Wand-Enhancer/?teste=1`) para ligar o modo teste nesse aparelho; `?teste=0` desliga. Com ele ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras, o resto é sorteado e a rodada recomeça sem pontuar a anterior. A nova rodada vale pontos normalmente e não aparece nenhum aviso para os outros jogadores. Funciona contra o computador e, no online, só para o anfitrião.
+Para ligar o modo administrador, **toque 5 vezes seguidas no ícone da tela inicial** do jogo (toque 5 vezes de novo para desligar). Também dá para abrir o site com `?teste=1` no fim do endereço; `?teste=0` desliga. No iPhone, o app instalado na Tela de Início não enxerga o que foi ligado pelo Safari, então use o toque no ícone. Com ele ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras (no máximo 4 buchas), o resto é sorteado e a rodada recomeça sem pontuar a anterior. A nova rodada vale pontos normalmente e não aparece nenhum aviso para os outros jogadores. Funciona contra o computador e, no online, só para o anfitrião (também na sala de espera, valendo para a primeira rodada).
 
 ## Publicar (GitHub Pages)
 

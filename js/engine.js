@@ -3,7 +3,9 @@
 // anfitrião da sala online, que é quem manda no jogo.
 import {
   TARGET_SCORE,
+  canAct,
   canPlay,
+  handOverOpening,
   createMatch,
   passTurn,
   playMove,
@@ -57,6 +59,13 @@ export class GameEngine {
     const isBot = info.kind === 'bot';
     const away = info.kind === 'human' && info.online === false;
 
+    if (!round.board && round.openers) {
+      // Saída da dupla: se um dos parceiros é humano e está na mesa, ele decide
+      // (joga ou deixa o parceiro sair); senão quem bateu sai sozinho.
+      const humanHere = round.openers.some((p) => this.seats[p].kind === 'human' && this.seats[p].online !== false);
+      if (humanHere) return;
+    }
+
     if (!canPlay(round, seat)) {
       // Sem pedra que sirva: passa sozinho, com uma pausa para todos verem.
       this.timer = setTimeout(() => this.act(seat, null), this.delay + (isBot ? 0 : 600));
@@ -84,10 +93,24 @@ export class GameEngine {
   // Jogada de um humano. `seq` evita aplicar duas vezes um clique repetido.
   play(seat, move, seq = null) {
     const round = this.match.round;
-    if (!round || round.result || round.turn !== seat) return false;
+    if (!canAct(round, seat)) return false;
     if (this.seats[seat].kind !== 'human') return false;
     if (seq !== null && seq !== round.seq) return false;
     return this.act(seat, move);
+  }
+
+  // Na saída da dupla, o humano deixa o parceiro sair.
+  handOver(seat, seq = null) {
+    const round = this.match.round;
+    if (seq !== null && seq !== round?.seq) return false;
+    if (this.seats[seat]?.kind !== 'human') return false;
+    try {
+      handOverOpening(this.match, seat);
+    } catch {
+      return false;
+    }
+    this.changed();
+    return true;
   }
 
   next(roundNo = null) {
@@ -132,6 +155,7 @@ export class GameEngine {
       hand: sortHand(round.hands[seat]),
       turn: round.turn,
       mustOpenWith: round.mustOpenWith,
+      openers: round.openers ?? null,
       lastAction: round.lastAction,
       seq: round.seq,
       result: round.result ? { ...round.result, hands: round.hands.map((h) => h.slice()) } : null,

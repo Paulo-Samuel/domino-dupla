@@ -1,5 +1,8 @@
 import {
   HAND_SIZE,
+  MAX_DOUBLES,
+  isDouble,
+  partnerOf,
   boardEnds,
   createDeck,
   legalMovesFor,
@@ -306,7 +309,8 @@ function renderLobby() {
       ? '<p class="hint">Carregando a mesa…</p>'
       : '<p class="hint">A partida já começou e os lugares estão ocupados.</p>';
   } else if (lobby.isHost) {
-    footer = `<button class="big-btn primary" id="start-btn" ${lobby.canStart ? '' : 'disabled'}>Começar partida</button>
+    footer = `${canPickTiles() ? `<button class="big-btn" id="lobby-pick-btn">🧪 Escolher minhas pedras${session.pendingPreset ? ' ✓' : ''}</button>` : ''}
+      <button class="big-btn primary" id="start-btn" ${lobby.canStart ? '' : 'disabled'}>Começar partida</button>
       <p class="hint">${lobby.canStart ? 'Tudo pronto!' : lobby.mySeat < 0 ? 'Escolha um lugar para você.' : 'Preencha os lugares vazios com amigos ou robôs.'}</p>`;
   } else {
     footer = `<p class="hint">${lobby.mySeat < 0 ? 'Escolha um lugar.' : 'Aguardando o anfitrião começar…'}</p>`;
@@ -336,6 +340,7 @@ function renderLobby() {
     });
   });
   $('#start-btn')?.addEventListener('click', () => session.startGame());
+  $('#lobby-pick-btn')?.addEventListener('click', () => showTilePicker());
   $('#invite-btn').addEventListener('click', () => invite(lobby.code));
   $('#leave-btn').addEventListener('click', () => {
     if (lobby.isHost && !confirm('Encerrar a sala para todos?')) return;
@@ -374,8 +379,12 @@ function boardShape() {
   return { aspect, halfWidth };
 }
 
+// Na saída da dupla vencedora, os dois parceiros podem jogar a primeira pedra.
+const isOpener = (view, seat) => !view.result && !view.board && !!view.openers?.includes(seat);
+const canActNow = (view, seat) => !view.result && (view.turn === seat || isOpener(view, seat));
+
 function myLegalMoves(view) {
-  if (view.result || view.turn !== view.seat) return [];
+  if (!canActNow(view, view.seat)) return [];
   return legalMovesFor(view.hand, view.board, view.mustOpenWith);
 }
 
@@ -465,7 +474,7 @@ function renderSeats(view) {
     const tag = rel === 2 ? 'sua dupla' : mode === 'online' && player.kind === 'bot' ? 'robô' : '';
     seatEl.classList.toggle('team-us', teamOf(seat) === teamOf(view.seat));
     seatEl.classList.toggle('team-them', teamOf(seat) !== teamOf(view.seat));
-    seatEl.classList.toggle('active', view.turn === seat && !view.result);
+    seatEl.classList.toggle('active', canActNow(view, seat));
     seatEl.classList.toggle('away', !player.online);
     seatEl.innerHTML = `
       <div class="seat-head">
@@ -481,7 +490,7 @@ function renderSeats(view) {
 
 function renderHand(view) {
   const moves = myLegalMoves(view);
-  const myTurn = view.turn === view.seat && !view.result;
+  const myTurn = canActNow(view, view.seat);
   const playable = new Set(moves.map((m) => tileId(m.tile)));
   handEl.innerHTML = view.hand
     .map((tile) => {
@@ -503,6 +512,13 @@ function renderStatus(view) {
   let text = '';
   if (view.result) {
     text = 'Fim da rodada';
+  } else if (isOpener(view, view.seat)) {
+    const partner = partnerOf(view.seat);
+    text = `Sua dupla sai: jogue qualquer pedra
+      <button class="side-btn" id="handover-btn">Deixar ${esc(nameOf(view, partner))} sair</button>`;
+  } else if (view.openers && !view.board) {
+    const [a, b] = view.openers;
+    text = `A dupla de ${esc(nameOf(view, a))} e ${esc(nameOf(view, b))} vai sair…`;
   } else if (view.turn === view.seat) {
     if (!myLegalMoves(view).length) text = 'Sem pedra para jogar… você passa';
     else if (selectedId) {
@@ -523,7 +539,12 @@ function renderStatus(view) {
     text = `${lastText}vez de ${esc(nameOf(view, view.turn))}…`;
   }
   statusEl.innerHTML = text;
-  statusEl.querySelectorAll('.side-btn').forEach((el) => {
+  $('#handover-btn')?.addEventListener('click', () => {
+    const v = currentView();
+    if (mode === 'local') localEngine.handOver(0, v.seq);
+    else session.handOver(v.seq);
+  });
+  statusEl.querySelectorAll('.side-btn[data-side]').forEach((el) => {
     el.addEventListener('click', () => onSidePick(el.dataset.side));
   });
 }
@@ -695,7 +716,7 @@ const isAdmin = () => loadJson(KEYS.admin) === true;
 function canPickTiles() {
   if (!isAdmin()) return false;
   if (mode === 'local') return true;
-  return mode === 'online' && session?.role === 'host' && !!session.view();
+  return mode === 'online' && session?.role === 'host';
 }
 
 function showTilePicker(onClose) {
@@ -705,12 +726,13 @@ function showTilePicker(onClose) {
     modalBody.querySelectorAll('.pick-tile').forEach((el) => {
       el.classList.toggle('on', chosen.has(el.dataset.id));
     });
-    $('#pick-count').textContent = `${chosen.size}/${HAND_SIZE}`;
+    const doubles = [...chosen].filter((id) => isDouble(id.split('-'))).length;
+    $('#pick-count').textContent = `${chosen.size}/${HAND_SIZE} · buchas ${doubles}/${MAX_DOUBLES}`;
   };
   openModal(`
     <h3>🧪 Escolher minhas pedras</h3>
-    <p class="small">Toque nas pedras que você quer receber (até ${HAND_SIZE}). As que faltarem e as mãos dos outros são sorteadas. A rodada atual é descartada sem pontuar e a nova vale normalmente.</p>
-    <p class="pick-count">Escolhidas: <b id="pick-count">0/${HAND_SIZE}</b></p>
+    <p class="small">Toque nas pedras que você quer receber (até ${HAND_SIZE}, com no máximo ${MAX_DOUBLES} buchas). As que faltarem e as mãos dos outros são sorteadas. ${mode === 'online' && !session?.view() ? 'Vale para a primeira rodada quando você começar a partida.' : 'A rodada atual é descartada sem pontuar e a nova vale normalmente.'}</p>
+    <p class="pick-count">Escolhidas: <b id="pick-count">0/${HAND_SIZE} · buchas 0/${MAX_DOUBLES}</b></p>
     <div class="pick-grid">${deck.map((t) => `<button class="pick-tile" data-id="${tileId(t)}" aria-label="Pedra ${t[0]} e ${t[1]}">${singleTileSvg(t, false)}</button>`).join('')}</div>
     <button class="primary" id="deal-btn">Dar as pedras</button>
     <button id="pick-cancel">Cancelar</button>
@@ -718,8 +740,16 @@ function showTilePicker(onClose) {
     modalBody.querySelectorAll('.pick-tile').forEach((el) => {
       el.addEventListener('click', () => {
         const id = el.dataset.id;
+        const [a, b] = id.split('-');
+        const doubles = [...chosen].filter((c) => isDouble(c.split('-'))).length;
         if (chosen.has(id)) chosen.delete(id);
-        else if (chosen.size < HAND_SIZE) chosen.add(id);
+        else if (chosen.size >= HAND_SIZE) return;
+        else if (a === b && doubles >= MAX_DOUBLES) {
+          el.classList.remove('shake');
+          void el.offsetWidth;
+          el.classList.add('shake');
+          return;
+        } else chosen.add(id);
         paint();
       });
     });
@@ -732,6 +762,7 @@ function showTilePicker(onClose) {
       else session.redealMe(tiles);
       closeModal();
       if (mode === 'local') localEngine.resume();
+      else if (!session.view()) renderOnline();
     });
   });
 }
@@ -741,7 +772,7 @@ function showRules(onClose) {
     <h3>Como jogar</h3>
     <div class="rules">
       <p>Quatro jogadores em duas duplas. Seu parceiro senta à sua frente. Cada um recebe 7 pedras e não há monte.</p>
-      <p>A primeira rodada começa com quem tem a <b>bucha de sena (6|6)</b>. Nas seguintes, quem venceu a rodada anterior começa com qualquer pedra. A vez passa para quem está à sua direita.</p>
+      <p>A primeira rodada começa com quem tem a <b>bucha de sena (6|6)</b>. Nas seguintes, a <b>dupla que venceu sai</b>: qualquer um dos dois parceiros pode jogar a primeira pedra (ou deixar o parceiro sair). Ninguém recebe mais de 4 buchas: se acontecer, as pedras são embaralhadas de novo. A vez passa para quem está à sua direita.</p>
       <p>Na sua vez, encaixe uma pedra numa das pontas. Sem pedra que sirva, você passa.</p>
       <p><b>Pontos</b> de quem bate (fica sem pedras):</p>
       <ul>
@@ -864,7 +895,23 @@ if (params.has('teste')) {
   params.delete('teste');
   history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
 }
-showHome(isAdmin() ? '🧪 Modo teste ativado (menu ☰ → Escolher minhas pedras)' : '');
+showHome(isAdmin() ? '🧪 Modo administrador ativo (menu ☰ → Escolher minhas pedras)' : '');
+
+// Também dá para ligar/desligar o modo administrador por dentro do app (útil no
+// app instalado no iPhone, que não enxerga o que foi ativado pelo Safari):
+// toque 5 vezes seguidas no ícone da tela inicial.
+let logoTaps = 0;
+let logoTimer = null;
+$('.home-logo img').addEventListener('click', () => {
+  logoTaps += 1;
+  clearTimeout(logoTimer);
+  logoTimer = setTimeout(() => { logoTaps = 0; }, 1500);
+  if (logoTaps < 5) return;
+  logoTaps = 0;
+  const on = !isAdmin();
+  saveJson(KEYS.admin, on ? true : null);
+  homeMessage(on ? '🧪 Modo administrador ativado (menu ☰ → Escolher minhas pedras)' : 'Modo administrador desligado');
+});
 if (invited) {
   $('#code-input').value = invited.toUpperCase().slice(0, 5);
   if ($('#name-input').value.trim()) $('#join-btn').click();

@@ -269,6 +269,9 @@ export class HostSession {
       case 'next':
         this.engine?.next(cmd.roundNo);
         break;
+      case 'handover':
+        if (this.engine && seat >= 0) this.engine.handOver(seat, cmd.seq);
+        break;
       case 'leave':
         if (this.phase === 'lobby' && seat >= 0) this.seats[seat] = emptySeat();
         this.markOffline(cid);
@@ -314,6 +317,10 @@ export class HostSession {
     if (!this.canStart()) return;
     this.phase = 'game';
     this.createEngine();
+    if (this.pendingPreset) {
+      this.engine.redeal(this.mySeat(), this.pendingPreset);
+      this.pendingPreset = null;
+    }
   }
 
   play(move, seq) {
@@ -324,9 +331,18 @@ export class HostSession {
     this.engine?.next(roundNo);
   }
 
+  handOver(seq) {
+    this.engine?.handOver(this.mySeat(), seq);
+  }
+
   // Modo teste: só o anfitrião, que roda o jogo, pode escolher as próprias pedras.
+  // Na sala de espera, a escolha fica guardada para a primeira rodada.
   redealMe(tiles) {
     if (this.engine && this.mySeat() >= 0) this.engine.redeal(this.mySeat(), tiles);
+    else {
+      this.pendingPreset = tiles;
+      this.update();
+    }
   }
 
   close() {
@@ -508,6 +524,7 @@ export class ClientSession {
   sitMe(seat) { this.send({ type: 'sit', seat }); }
   play(move, seq) { this.send({ type: 'play', move, seq }); }
   next(roundNo) { this.send({ type: 'next', roundNo }); }
+  handOver(seq) { this.send({ type: 'handover', seq }); }
   setPaused() {}
 
   close() {
