@@ -3,9 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Dominó em dupla (4 jogadores) para iPhone, como web app instalável.",
+  "description": "Dominó em dupla (4 jogadores): web app instalável e app Android.",
   "scripts": {
     "test": "node --test",
-    "start": "python3 -m http.server 8080"
+    "start": "python3 -m http.server 8080",
+    "build:web": "node scripts/build-web.mjs",
+    "android:sync": "npm run build:web && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
   }
 }

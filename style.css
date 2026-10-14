@@ -85,7 +85,8 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .join-row .big-btn { width: auto; padding: 0 22px; }
 
 .home-msg { min-height: 20px; margin: 0; text-align: center; color: var(--gold); font-size: 14px; }
-.link-btn { background: none; border: 0; color: var(--ink-soft); text-decoration: underline; padding: 8px; }
+.link-btn { background: none; border: 0; color: var(--ink-soft); text-decoration: underline; padding: 8px; text-align: center; }
+#android-app-link { color: var(--gold); font-weight: 700; }
 
 .lobby-head { text-align: center; }
 .lobby-label { margin: 0; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }

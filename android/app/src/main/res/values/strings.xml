@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dominó em Dupla</string>
+    <string name="title_activity_main">Dominó em Dupla</string>
+    <string name="package_name">io.github.paulosamuel.dominodupla</string>
+    <string name="custom_url_scheme">io.github.paulosamuel.dominodupla</string>
+</resources>
