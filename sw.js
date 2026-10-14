@@ -1,6 +1,6 @@
 // Cache do app para jogar offline. Busca primeiro na rede (para todos jogarem
 // sempre a versão mais nova) e usa o cache quando estiver sem internet.
-const CACHE = 'domino-dupla-v5';
+const CACHE = 'domino-dupla-v6';
 const ASSETS = [
   './',
   'index.html',
@@ -37,7 +37,8 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        if (response.ok) {
+        // Não guarda as novas tentativas (style.css?tentativa=...), só os arquivos.
+        if (response.ok && !new URL(event.request.url).search.includes('tentativa=')) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(event.request, copy));
         }

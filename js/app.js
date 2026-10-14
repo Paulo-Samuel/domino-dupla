@@ -39,6 +39,21 @@ const statusEl = $('#status');
 const modal = $('#modal');
 const modalBody = $('#modal-body');
 
+// Se a folha de estilos não chegou (4G instável, navegador embutido de outro
+// app), a página aparece sem cores e sem layout: tenta baixar de novo.
+function ensureStyles(attempt = 0) {
+  if (getComputedStyle(document.documentElement).getPropertyValue('--felt').trim()) return;
+  if (attempt >= 5) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `style.css?tentativa=${Date.now()}`;
+  link.onload = () => ensureStyles(attempt + 1);
+  link.onerror = () => setTimeout(() => ensureStyles(attempt + 1), 1500);
+  document.head.append(link);
+}
+if (document.readyState === 'complete') ensureStyles();
+else window.addEventListener('load', () => ensureStyles());
+
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 // ---------- Armazenamento ----------
