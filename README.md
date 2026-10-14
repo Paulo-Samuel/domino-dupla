@@ -41,9 +41,11 @@ Bom saber:
 - **Jogo trancado**: a dupla com menos pontos na mão ganha 1 ponto; empate não pontua.
 - Vence a dupla que chegar a **4 pontos**.
 
-## Modo teste (administrador)
+## Modo administrador
 
-Para ligar o modo administrador, **toque 5 vezes seguidas no ícone da tela inicial** do jogo (toque 5 vezes de novo para desligar). Também dá para abrir o site com `?teste=1` no fim do endereço; `?teste=0` desliga. No iPhone, o app instalado na Tela de Início não enxerga o que foi ligado pelo Safari, então use o toque no ícone. Com ele ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras (no máximo 4 buchas), o resto é sorteado e a rodada recomeça sem pontuar a anterior. A nova rodada vale pontos normalmente e não aparece nenhum aviso para os outros jogadores. Funciona contra o computador e, no online, só para o anfitrião (também na sala de espera, valendo para a primeira rodada).
+O administrador tem um link pessoal: a pasta `paulo-adm/` (`https://paulo-samuel.github.io/Wand-Enhancer/paulo-adm/`). Abrindo por ela, o jogo entra no modo administrador naquele aparelho; dá para instalar essa página na Tela de Início como o app **Dominó ADM**, que sempre abre como administrador. O jogo normal não tem nenhum outro jeito de ligar o modo (`?adm=0` desliga).
+
+Com o modo ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras (no máximo 4 buchas), o resto é sorteado e a rodada recomeça sem pontuar a anterior. A nova rodada vale pontos normalmente e não aparece nenhum aviso para os outros jogadores. Funciona contra o computador e, no online, só para o anfitrião (também na sala de espera, valendo para a primeira rodada).
 
 ## Publicar (GitHub Pages)
 

@@ -21,7 +21,7 @@ const KEYS = {
   keys: 'domino-dupla.keys',
   session: 'domino-dupla.online.v1',
   seenRules: 'domino-dupla.seen-rules',
-  admin: 'domino-dupla.admin',
+  admin: 'domino-dupla.admin.v2',
 };
 const FINISH_LABEL = {
   simples: 'batida simples',
@@ -709,8 +709,10 @@ function showMenu() {
   });
 }
 
-// ---------- Modo teste (administrador) ----------
-// Liberado abrindo o site com ?teste=1 (e desligado com ?teste=0).
+// ---------- Modo administrador ----------
+// Só liga pelo link pessoal do administrador (pasta paulo-adm/), que abre o
+// jogo com ?adm=<chave>. Fica guardado neste aparelho; ?adm=0 desliga.
+const ADMIN_KEY = 'pwxos7no';
 const isAdmin = () => loadJson(KEYS.admin) === true;
 
 function canPickTiles() {
@@ -890,28 +892,14 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 // Link de convite: ?sala=CODIGO
 const params = new URLSearchParams(location.search);
 const invited = params.get('sala');
-if (params.has('teste')) {
-  saveJson(KEYS.admin, params.get('teste') === '1' ? true : null);
-  params.delete('teste');
+if (params.has('adm')) {
+  const value = params.get('adm');
+  if (value === ADMIN_KEY) saveJson(KEYS.admin, true);
+  else if (value === '0') saveJson(KEYS.admin, null);
+  params.delete('adm');
   history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
 }
 showHome(isAdmin() ? '🧪 Modo administrador ativo (menu ☰ → Escolher minhas pedras)' : '');
-
-// Também dá para ligar/desligar o modo administrador por dentro do app (útil no
-// app instalado no iPhone, que não enxerga o que foi ativado pelo Safari):
-// toque 5 vezes seguidas no ícone da tela inicial.
-let logoTaps = 0;
-let logoTimer = null;
-$('.home-logo img').addEventListener('click', () => {
-  logoTaps += 1;
-  clearTimeout(logoTimer);
-  logoTimer = setTimeout(() => { logoTaps = 0; }, 1500);
-  if (logoTaps < 5) return;
-  logoTaps = 0;
-  const on = !isAdmin();
-  saveJson(KEYS.admin, on ? true : null);
-  homeMessage(on ? '🧪 Modo administrador ativado (menu ☰ → Escolher minhas pedras)' : 'Modo administrador desligado');
-});
 if (invited) {
   $('#code-input').value = invited.toUpperCase().slice(0, 5);
   if ($('#name-input').value.trim()) $('#join-btn').click();
