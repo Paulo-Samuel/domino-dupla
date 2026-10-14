@@ -116,22 +116,37 @@ export class GameEngine {
   next(roundNo = null) {
     if (!this.match.round?.result) return false;
     if (roundNo !== null && roundNo !== this.match.roundNo) return false;
+    // Partida nova começa sem pedras fixas do administrador.
     if (this.match.winner !== null) this.match = createMatch();
-    startRound(this.match);
+    startRound(this.match, Math.random, { preset: this.match.fixedPreset ?? null });
     this.changed();
     return true;
   }
 
-  // Modo teste: distribui de novo, dando ao lugar `seat` as pedras escolhidas.
-  // Uma rodada em andamento é descartada sem pontuar; depois do fim da
-  // rodada (ou da partida) já vale como a próxima.
-  redeal(seat, tiles) {
+  // Modo administrador: distribui de novo, dando ao lugar `seat` as pedras
+  // escolhidas. Uma rodada em andamento é descartada sem pontuar; depois do
+  // fim da rodada (ou da partida) já vale como a próxima. Com `keep`, as
+  // mesmas pedras voltam em todas as rodadas até a partida acabar.
+  redeal(seat, tiles, { keep = false } = {}) {
     const { match } = this;
     if (match.winner !== null) this.match = createMatch();
     else if (match.round && !match.round.result) match.roundNo -= 1;
+    if (keep) this.match.fixedPreset = { seat, tiles: tiles.slice() };
+    else delete this.match.fixedPreset;
     startRound(this.match, Math.random, { preset: { seat, tiles } });
     this.changed();
     return true;
+  }
+
+  fixedTiles(seat) {
+    const fixed = this.match.fixedPreset;
+    return fixed && fixed.seat === seat ? fixed.tiles.slice() : null;
+  }
+
+  releaseFixed() {
+    if (!this.match.fixedPreset) return;
+    delete this.match.fixedPreset;
+    this.changed();
   }
 
   setOnline(seat, online) {

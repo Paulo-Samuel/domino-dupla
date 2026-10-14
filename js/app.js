@@ -324,7 +324,7 @@ function renderLobby() {
       ? '<p class="hint">Carregando a mesa…</p>'
       : '<p class="hint">A partida já começou e os lugares estão ocupados.</p>';
   } else if (lobby.isHost) {
-    footer = `${canPickTiles() ? `<button class="big-btn" id="lobby-pick-btn">🧪 Escolher minhas pedras${session.pendingPreset ? ' ✓' : ''}</button>` : ''}
+    footer = `${canPickTiles() ? `<button class="big-btn" id="lobby-pick-btn">🧪 Escolher minhas pedras${session.pendingPreset ? (session.pendingPreset.keep ? ' (📌 fixas)' : ' ✓') : ''}</button>` : ''}
       <button class="big-btn primary" id="start-btn" ${lobby.canStart ? '' : 'disabled'}>Começar partida</button>
       <p class="hint">${lobby.canStart ? 'Tudo pronto!' : lobby.mySeat < 0 ? 'Escolha um lugar para você.' : 'Preencha os lugares vazios com amigos ou robôs.'}</p>`;
   } else {
@@ -681,7 +681,7 @@ function showMenu() {
       <label class="toggle"><span>Adversários espertos</span><input type="checkbox" id="opt-level" ${settings.level >= 2 ? 'checked' : ''}></label>` : `
       <p class="small">Sala <b>${esc(session.code)}</b></p>
       <button id="invite-menu-btn">📲 Convidar</button>`}
-      ${canPickTiles() ? '<button id="pick-btn">🧪 Escolher minhas pedras</button>' : ''}
+      ${canPickTiles() ? `<button id="pick-btn">🧪 Escolher minhas pedras${fixedTilesNow() ? ' (📌 fixas)' : ''}</button>` : ''}
       <button id="rules-btn">Regras</button>
       ${isLocal ? '<button id="new-btn" class="danger">Nova partida</button>' : ''}
       <button id="exit-btn" class="danger">${isLocal ? 'Sair para o início' : isHost ? 'Encerrar sala' : 'Sair da sala'}</button>
@@ -736,8 +736,16 @@ function canPickTiles() {
   return mode === 'online' && session?.role === 'host';
 }
 
+// Pedras fixas do administrador (valem em todas as rodadas até a partida acabar).
+function fixedTilesNow() {
+  if (mode === 'local') return localEngine?.fixedTiles(0) ?? null;
+  if (mode === 'online' && session?.role === 'host') return session.fixedMe();
+  return null;
+}
+
 function showTilePicker(onClose) {
-  const chosen = new Set();
+  const fixed = fixedTilesNow();
+  const chosen = new Set(fixed ?? []);
   const deck = createDeck();
   const paint = () => {
     modalBody.querySelectorAll('.pick-tile').forEach((el) => {
@@ -751,7 +759,9 @@ function showTilePicker(onClose) {
     <p class="small">Toque nas pedras que você quer receber (até ${HAND_SIZE}, com no máximo ${MAX_DOUBLES} buchas). As que faltarem e as mãos dos outros são sorteadas. ${mode === 'online' && !session?.view() ? 'Vale para a primeira rodada quando você começar a partida.' : 'A rodada atual é descartada sem pontuar e a nova vale normalmente.'}</p>
     <p class="pick-count">Escolhidas: <b id="pick-count">0/${HAND_SIZE} · buchas 0/${MAX_DOUBLES}</b></p>
     <div class="pick-grid">${deck.map((t) => `<button class="pick-tile" data-id="${tileId(t)}" aria-label="Pedra ${t[0]} e ${t[1]}">${singleTileSvg(t, false)}</button>`).join('')}</div>
+    <label class="toggle"><span>📌 Manter essas pedras em todas as rodadas até acabar a partida</span><input type="checkbox" id="keep-input" checked></label>
     <button class="primary" id="deal-btn">Dar as pedras</button>
+    ${fixed ? '<button id="release-btn">Soltar pedras fixas (volta ao sorteio na próxima rodada)</button>' : ''}
     <button id="pick-cancel">Cancelar</button>
   `, () => {
     modalBody.querySelectorAll('.pick-tile').forEach((el) => {
@@ -770,13 +780,21 @@ function showTilePicker(onClose) {
         paint();
       });
     });
+    paint();
     $('#pick-cancel').addEventListener('click', () => (onClose ? onClose() : closeModal()));
+    $('#release-btn')?.addEventListener('click', () => {
+      if (mode === 'local') localEngine.releaseFixed();
+      else session.releaseFixedMe();
+      if (onClose) onClose();
+      else closeModal();
+    });
     $('#deal-btn').addEventListener('click', () => {
       const tiles = [...chosen];
+      const keep = $('#keep-input').checked;
       selectedId = null;
       resultShownFor = null;
-      if (mode === 'local') localEngine.redeal(0, tiles);
-      else session.redealMe(tiles);
+      if (mode === 'local') localEngine.redeal(0, tiles, { keep });
+      else session.redealMe(tiles, keep);
       closeModal();
       if (mode === 'local') localEngine.resume();
       else if (!session.view()) renderOnline();

@@ -349,6 +349,7 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 /* ---------- Modo teste ---------- */
 .pick-count { text-align: center; }
+.modal .toggle span { font-size: 14px; padding-right: 10px; }
 .pick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
 .modal .pick-tile {
   padding: 4px; border-radius: 8px; border: 2px solid transparent; background: #ece6d8;

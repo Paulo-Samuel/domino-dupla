@@ -71,3 +71,41 @@ test('saída da dupla: robô espera o parceiro humano decidir, e entrega a saíd
   engine.pause();
   assert.ok(engine.match.round.board); // o parceiro saiu
 });
+
+test('pedras fixas do administrador valem em todas as rodadas até a partida acabar', () => {
+  const engine = new GameEngine({ seats: seats() });
+  engine.begin();
+  engine.pause();
+  const mine = ['6-6', '5-5', '1-3'];
+  engine.redeal(0, mine, { keep: true });
+  engine.pause();
+  for (let r = 0; r < 3; r++) {
+    // encerra a rodada à força e passa para a próxima
+    engine.match.round.result = { type: 'simples', player: 1, team: 1, points: 0 };
+    engine.next();
+    engine.pause();
+    const hand = engine.view(0).hand.map(tileId);
+    for (const id of mine) assert.ok(hand.includes(id), `rodada ${engine.match.roundNo}: faltou ${id}`);
+  }
+  // fim da partida: as pedras fixas acabam
+  engine.match.round.result = { type: 'simples', player: 1, team: 1, points: 0 };
+  engine.match.winner = 1;
+  engine.next();
+  engine.pause();
+  assert.equal(engine.fixedTiles(0), null);
+});
+
+test('soltar as pedras fixas volta ao sorteio', () => {
+  const engine = new GameEngine({ seats: seats() });
+  engine.begin();
+  engine.pause();
+  engine.redeal(0, ['6-6'], { keep: true });
+  engine.pause();
+  assert.deepEqual(engine.fixedTiles(0), ['6-6']);
+  engine.releaseFixed();
+  engine.pause();
+  assert.equal(engine.fixedTiles(0), null);
+  engine.redeal(0, ['5-5']);
+  engine.pause();
+  assert.equal(engine.fixedTiles(0), null); // sem "manter", vale só para uma rodada
+});

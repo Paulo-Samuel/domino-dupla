@@ -318,7 +318,7 @@ export class HostSession {
     this.phase = 'game';
     this.createEngine();
     if (this.pendingPreset) {
-      this.engine.redeal(this.mySeat(), this.pendingPreset);
+      this.engine.redeal(this.mySeat(), this.pendingPreset.tiles, { keep: this.pendingPreset.keep });
       this.pendingPreset = null;
     }
   }
@@ -337,12 +337,23 @@ export class HostSession {
 
   // Modo teste: só o anfitrião, que roda o jogo, pode escolher as próprias pedras.
   // Na sala de espera, a escolha fica guardada para a primeira rodada.
-  redealMe(tiles) {
-    if (this.engine && this.mySeat() >= 0) this.engine.redeal(this.mySeat(), tiles);
+  redealMe(tiles, keep = false) {
+    if (this.engine && this.mySeat() >= 0) this.engine.redeal(this.mySeat(), tiles, { keep });
     else {
-      this.pendingPreset = tiles;
+      this.pendingPreset = { tiles, keep };
       this.update();
     }
+  }
+
+  fixedMe() {
+    if (this.engine) return this.engine.fixedTiles(this.mySeat());
+    return this.pendingPreset?.keep ? this.pendingPreset.tiles.slice() : null;
+  }
+
+  releaseFixedMe() {
+    if (this.engine) this.engine.releaseFixed();
+    else if (this.pendingPreset) this.pendingPreset.keep = false;
+    this.update();
   }
 
   close() {
