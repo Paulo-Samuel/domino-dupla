@@ -54,7 +54,9 @@ test('primeira rodada começa obrigatoriamente com a carroça de sena', () => {
 
 test('classificação da batida', () => {
   assert.equal(classifyFinish([2, 5], [5, 4]), 'simples');
-  assert.equal(classifyFinish([2, 5], [2, 5]), 'simples'); // pedra comum nas duas pontas vale 1
+  assert.equal(classifyFinish([2, 5], [2, 5]), 'duasPontas');
+  assert.equal(classifyFinish([2, 5], [5, 2]), 'duasPontas');
+  assert.equal(POINTS.duasPontas, 2);
   assert.equal(classifyFinish([2, 5], [5, 5]), 'bucha');
   assert.equal(classifyFinish([3, 3], [3, 3]), 'gambuada');
   assert.equal(classifyFinish([3, 3], [3, 1]), 'simples');
@@ -153,4 +155,16 @@ test('layout da mesa não sobrepõe pedras', () => {
       }
     }
   }
+});
+
+test('modo teste: o jogador recebe as pedras escolhidas e a rodada fica marcada', () => {
+  const match = createMatch();
+  startRound(match, seeded(5), { preset: { seat: 2, tiles: ['6-6', '5-5', '0-1'] } });
+  const ids = match.round.hands[2].map(tileId);
+  for (const id of ['6-6', '5-5', '0-1']) assert.ok(ids.includes(id));
+  assert.equal(match.round.hands.every((h) => h.length === 7), true);
+  const all = match.round.hands.flat().map(tileId);
+  assert.equal(new Set(all).size, 28);
+  assert.equal(match.round.test, true);
+  assert.equal(match.round.turn, 2); // tem a 6|6
 });

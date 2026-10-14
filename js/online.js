@@ -324,6 +324,11 @@ export class HostSession {
     this.engine?.next(roundNo);
   }
 
+  // Modo teste: só o anfitrião, que roda o jogo, pode escolher as próprias pedras.
+  redealMe(tiles) {
+    if (this.engine && this.mySeat() >= 0) this.engine.redeal(this.mySeat(), tiles);
+  }
+
   close() {
     this.engine?.pause();
     if (this.mqtt?.connected) this.mqtt.publish(`${this.prefix}/state`, '', { retain: true });

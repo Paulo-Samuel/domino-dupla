@@ -345,6 +345,16 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .rules ul { padding-left: 18px; margin: 6px 0; }
 .rules li { margin: 3px 0; }
 
+/* ---------- Modo teste ---------- */
+.pick-count { text-align: center; }
+.pick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
+.modal .pick-tile {
+  padding: 4px; border-radius: 8px; border: 2px solid transparent; background: #ece6d8;
+  aspect-ratio: 2 / 1;
+}
+.modal .pick-tile svg { width: 100%; height: 100%; display: block; }
+.modal .pick-tile.on { border-color: #12513b; background: #c9e9dc; }
+
 /* ---------- Animações ---------- */
 @keyframes pop { from { transform: scale(.6); opacity: 0; } }
 .me[data-bubble]:not([data-bubble=""])::before { animation: none; }

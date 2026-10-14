@@ -35,9 +35,14 @@ Bom saber:
 - Pontos de quem bate (fica sem pedras):
   - batida simples — 1
   - de bucha (última pedra é dobrada) — 2
+  - nas duas pontas (pedra comum que encaixa nas duas pontas, ex.: pontas 3 e 5, bate com 3|5) — 2
   - gambuada (bucha que serve nas duas pontas) — 4
 - **Jogo trancado**: a dupla com menos pontos na mão ganha 1 ponto; empate não pontua.
 - Vence a dupla que chegar a **4 pontos**.
+
+## Modo teste (administrador)
+
+Abra o site com `?teste=1` no fim do endereço (ex.: `https://paulo-samuel.github.io/Wand-Enhancer/?teste=1`) para ligar o modo teste nesse aparelho; `?teste=0` desliga. Com ele ligado, o menu ☰ ganha **🧪 Escolher minhas pedras**: você escolhe até 7 pedras, o resto é sorteado e a rodada recomeça sem pontuar a anterior. Funciona contra o computador e, no online, só para o anfitrião. Rodadas assim aparecem como **🧪 Rodada de teste** para todos na mesa.
 
 ## Publicar (GitHub Pages)
 

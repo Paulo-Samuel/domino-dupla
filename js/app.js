@@ -1,5 +1,7 @@
 import {
+  HAND_SIZE,
   boardEnds,
+  createDeck,
   legalMovesFor,
   handPips,
   teamOf,
@@ -16,10 +18,12 @@ const KEYS = {
   keys: 'domino-dupla.keys',
   session: 'domino-dupla.online.v1',
   seenRules: 'domino-dupla.seen-rules',
+  admin: 'domino-dupla.admin',
 };
 const FINISH_LABEL = {
   simples: 'batida simples',
   bucha: 'batida de bucha',
+  duasPontas: 'batida nas duas pontas',
   gambuada: 'gambuada',
   trancado: 'jogo trancado',
 };
@@ -406,7 +410,7 @@ function renderGame() {
   const myTeam = teamOf(view.seat);
   $('#score-us').textContent = view.scores[myTeam];
   $('#score-them').textContent = view.scores[1 - myTeam];
-  $('#round-tag').textContent = `Rodada ${view.roundNo} · até ${view.target}`;
+  $('#round-tag').textContent = `${view.test ? '🧪 Rodada de teste · ' : ''}Rodada ${view.roundNo} · até ${view.target}`;
 
   const banner = $('#net-banner');
   const netText = mode === 'online' ? {
@@ -641,6 +645,7 @@ function showMenu() {
       <label class="toggle"><span>Adversários espertos</span><input type="checkbox" id="opt-level" ${settings.level >= 2 ? 'checked' : ''}></label>` : `
       <p class="small">Sala <b>${esc(session.code)}</b></p>
       <button id="invite-menu-btn">📲 Convidar</button>`}
+      ${canPickTiles() ? '<button id="pick-btn">🧪 Escolher minhas pedras</button>' : ''}
       <button id="rules-btn">Regras</button>
       ${isLocal ? '<button id="new-btn" class="danger">Nova partida</button>' : ''}
       <button id="exit-btn" class="danger">${isLocal ? 'Sair para o início' : isHost ? 'Encerrar sala' : 'Sair da sala'}</button>
@@ -660,6 +665,7 @@ function showMenu() {
     });
     $('#invite-menu-btn')?.addEventListener('click', () => invite(session.code));
     $('#rules-btn').addEventListener('click', () => showRules(resumeGame));
+    $('#pick-btn')?.addEventListener('click', () => showTilePicker(resumeGame));
     $('#close-btn').addEventListener('click', resumeGame);
     $('#new-btn')?.addEventListener('click', () => {
       if (!confirm('Começar uma nova partida? O placar atual será perdido.')) return;
@@ -682,6 +688,54 @@ function showMenu() {
   });
 }
 
+// ---------- Modo teste (administrador) ----------
+// Liberado abrindo o site com ?teste=1 (e desligado com ?teste=0).
+const isAdmin = () => loadJson(KEYS.admin) === true;
+
+function canPickTiles() {
+  if (!isAdmin()) return false;
+  if (mode === 'local') return true;
+  return mode === 'online' && session?.role === 'host' && !!session.view();
+}
+
+function showTilePicker(onClose) {
+  const chosen = new Set();
+  const deck = createDeck();
+  const paint = () => {
+    modalBody.querySelectorAll('.pick-tile').forEach((el) => {
+      el.classList.toggle('on', chosen.has(el.dataset.id));
+    });
+    $('#pick-count').textContent = `${chosen.size}/${HAND_SIZE}`;
+  };
+  openModal(`
+    <h3>🧪 Escolher minhas pedras</h3>
+    <p class="small">Toque nas pedras que você quer receber (até ${HAND_SIZE}). As que faltarem e as mãos dos outros são sorteadas. A rodada atual é descartada sem pontuar${mode === 'online' ? ' e todos na sala veem que é uma rodada de teste' : ''}.</p>
+    <p class="pick-count">Escolhidas: <b id="pick-count">0/${HAND_SIZE}</b></p>
+    <div class="pick-grid">${deck.map((t) => `<button class="pick-tile" data-id="${tileId(t)}" aria-label="Pedra ${t[0]} e ${t[1]}">${singleTileSvg(t, false)}</button>`).join('')}</div>
+    <button class="primary" id="deal-btn">Dar as pedras</button>
+    <button id="pick-cancel">Cancelar</button>
+  `, () => {
+    modalBody.querySelectorAll('.pick-tile').forEach((el) => {
+      el.addEventListener('click', () => {
+        const id = el.dataset.id;
+        if (chosen.has(id)) chosen.delete(id);
+        else if (chosen.size < HAND_SIZE) chosen.add(id);
+        paint();
+      });
+    });
+    $('#pick-cancel').addEventListener('click', () => (onClose ? onClose() : closeModal()));
+    $('#deal-btn').addEventListener('click', () => {
+      const tiles = [...chosen];
+      selectedId = null;
+      resultShownFor = null;
+      if (mode === 'local') localEngine.redeal(0, tiles);
+      else session.redealMe(tiles);
+      closeModal();
+      if (mode === 'local') localEngine.resume();
+    });
+  });
+}
+
 function showRules(onClose) {
   openModal(`
     <h3>Como jogar</h3>
@@ -693,6 +747,7 @@ function showRules(onClose) {
       <ul>
         <li>Batida simples — 1 ponto</li>
         <li>De bucha (bater com pedra dobrada) — 2 pontos</li>
+        <li>Nas duas pontas (pedra comum que encaixa nas duas pontas, ex.: pontas 3 e 5, bate com 3|5) — 2 pontos</li>
         <li>Gambuada (bucha que serve nas duas pontas) — 4 pontos</li>
       </ul>
       <p><b>Jogo trancado:</b> se ninguém consegue jogar, somam-se os pontos das pedras de cada dupla e quem tiver menos ganha 1 ponto. Empate não pontua.</p>
@@ -802,8 +857,14 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 }
 
 // Link de convite: ?sala=CODIGO
-const invited = new URLSearchParams(location.search).get('sala');
-showHome();
+const params = new URLSearchParams(location.search);
+const invited = params.get('sala');
+if (params.has('teste')) {
+  saveJson(KEYS.admin, params.get('teste') === '1' ? true : null);
+  params.delete('teste');
+  history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
+}
+showHome(isAdmin() ? '🧪 Modo teste ativado (menu ☰ → Escolher minhas pedras)' : '');
 if (invited) {
   $('#code-input').value = invited.toUpperCase().slice(0, 5);
   if ($('#name-input').value.trim()) $('#join-btn').click();

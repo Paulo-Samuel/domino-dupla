@@ -9,6 +9,7 @@ export const TOTAL_PIPS = 168;
 export const POINTS = {
   simples: 1,
   bucha: 2,
+  duasPontas: 2,
   gambuada: 4,
   trancado: 1,
 };
@@ -55,11 +56,19 @@ export function createMatch() {
   };
 }
 
-export function startRound(match, rng = Math.random) {
-  const deck = shuffle(createDeck(), rng);
-  const hands = [];
+// preset (modo teste): { seat, tiles: ['6-6', '3-5', ...] } escolhe as
+// pedras de um jogador; o que faltar até 7 e as outras mãos saem no sorteio.
+export function startRound(match, rng = Math.random, { preset = null } = {}) {
+  let deck = shuffle(createDeck(), rng);
+  const hands = [[], [], [], []];
+  if (preset) {
+    const wanted = new Set(preset.tiles.slice(0, HAND_SIZE));
+    hands[preset.seat] = deck.filter((t) => wanted.has(tileId(t)));
+    deck = deck.filter((t) => !wanted.has(tileId(t)));
+  }
   for (let p = 0; p < PLAYER_COUNT; p++) {
-    hands.push(sortHand(deck.slice(p * HAND_SIZE, (p + 1) * HAND_SIZE)));
+    while (hands[p].length < HAND_SIZE) hands[p].push(deck.pop());
+    hands[p] = sortHand(hands[p]);
   }
 
   let turn = match.starter;
@@ -80,6 +89,7 @@ export function startRound(match, rng = Math.random) {
     result: null,
     // Conta as ações da rodada; a interface usa para saber o que é novidade.
     seq: 0,
+    test: !!preset,
   };
   return match;
 }
@@ -140,11 +150,14 @@ function placeTile(board, tile, side) {
 }
 
 // Classifica a batida a partir das pontas ANTES da última pedra:
-// bucha (pedra dobrada) vale 2; bucha que serve nas duas pontas é gambuada.
+// bucha (pedra dobrada) vale 2; bucha que serve nas duas pontas é gambuada (4);
+// pedra comum que encaixa nas duas pontas (pontas 3 e 5, bate com 3|5) vale 2.
 export function classifyFinish(ends, tile) {
-  if (!ends || !isDouble(tile)) return 'simples';
+  if (!ends) return 'simples';
   const [left, right] = ends;
-  return tile[0] === left && tile[0] === right ? 'gambuada' : 'bucha';
+  if (isDouble(tile)) return tile[0] === left && tile[0] === right ? 'gambuada' : 'bucha';
+  if (left !== right && tile.includes(left) && tile.includes(right)) return 'duasPontas';
+  return 'simples';
 }
 
 function isBlocked(round) {

@@ -40,3 +40,16 @@ test('robô joga no lugar de quem caiu, depois da tolerância', async () => {
   engine.pause();
   assert.ok(engine.match.round.seq >= 1);
 });
+
+test('modo teste: redistribui com as pedras escolhidas sem pontuar a rodada descartada', () => {
+  const engine = new GameEngine({ seats: seats() });
+  engine.begin();
+  engine.pause();
+  engine.redeal(0, ['3-3', '2-5', '1-4']);
+  engine.pause();
+  const view = engine.view(0);
+  assert.equal(view.roundNo, 1);
+  assert.equal(view.test, true);
+  for (const id of ['3-3', '2-5', '1-4']) assert.ok(view.hand.map(tileId).includes(id));
+  assert.deepEqual(view.scores, [0, 0]);
+});

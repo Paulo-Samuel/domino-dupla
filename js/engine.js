@@ -99,6 +99,18 @@ export class GameEngine {
     return true;
   }
 
+  // Modo teste: distribui de novo, dando ao lugar `seat` as pedras escolhidas.
+  // Uma rodada em andamento é descartada sem pontuar; depois do fim da
+  // rodada (ou da partida) já vale como a próxima.
+  redeal(seat, tiles) {
+    const { match } = this;
+    if (match.winner !== null) this.match = createMatch();
+    else if (match.round && !match.round.result) match.roundNo -= 1;
+    startRound(this.match, Math.random, { preset: { seat, tiles } });
+    this.changed();
+    return true;
+  }
+
   setOnline(seat, online) {
     if (this.seats[seat].online === online) return;
     this.seats[seat].online = online;
@@ -123,6 +135,7 @@ export class GameEngine {
       lastAction: round.lastAction,
       seq: round.seq,
       result: round.result ? { ...round.result, hands: round.hands.map((h) => h.slice()) } : null,
+      test: !!round.test,
     };
   }
 }
