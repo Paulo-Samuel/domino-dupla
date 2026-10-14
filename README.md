@@ -14,6 +14,16 @@ Dominó em dupla para 4 jogadores, no iPhone e no Android:
 
 Abra pelo ícone: ele roda em tela cheia, como um app.
 
+## App Android (APK)
+
+Baixe no celular: **https://github.com/Paulo-Samuel/domino-dupla/releases/download/android/domino-dupla.apk** e abra o arquivo. Na primeira vez, o Android pede para permitir instalar apps dessa origem (o navegador ou o gerenciador de arquivos). O site também mostra o botão **📱 Baixar o app para Android** quando aberto num Android.
+
+O APK é o mesmo jogo dentro de um app ([Capacitor](https://capacitorjs.com)): funciona offline contra o computador e joga online com quem estiver no site ou no app. No app, o modo administrador liga tocando **7 vezes na versão** da tela inicial e digitando a chave.
+
+O workflow `.github/workflows/android.yml` gera o APK a cada push na `main` e atualiza a página de download (release `android`). Para os APKs novos instalarem por cima dos antigos, eles precisam da mesma assinatura: cadastre em *Settings → Secrets and variables → Actions* os segredos `ANDROID_KEYSTORE_BASE64` (a chave em base64) e `ANDROID_KEYSTORE_PASSWORD`. Sem eles, o APK sai com uma chave de depuração que muda a cada geração.
+
+Para gerar localmente: `npm install`, `npm run android:sync` e `cd android && ./gradlew assembleRelease` (precisa do Android SDK e Java 21).
+
 ## Jogar online
 
 1. Um jogador (o **anfitrião**) toca em **Criar sala online** e recebe um código de 5 letras.

@@ -246,7 +246,14 @@ function brokerQuery() {
   return broker ? `?broker=${encodeURIComponent(broker)}` : '';
 }
 
+// Dentro do app Android o endereço da página é interno (https://localhost),
+// então os convites sempre apontam para o site público.
+const PUBLIC_URL = 'https://paulo-samuel.github.io/domino-dupla/';
+const isNativeApp = () => !!window.Capacitor?.isNativePlatform?.();
+const ANDROID_APK_URL = 'https://github.com/Paulo-Samuel/domino-dupla/releases/download/android/domino-dupla.apk';
+
 function inviteLink(code) {
+  if (isNativeApp()) return `${PUBLIC_URL}?sala=${encodeURIComponent(code)}`;
   const params = new URLSearchParams(location.search);
   params.set('sala', code);
   return `${location.origin}${location.pathname}?${params}`;
@@ -725,8 +732,10 @@ function showMenu() {
 }
 
 // ---------- Modo administrador ----------
-// Só liga pelo link pessoal do administrador (pasta paulo-adm/), que abre o
-// jogo com ?adm=<chave>. Fica guardado neste aparelho; ?adm=0 desliga.
+// No site, liga pelo link pessoal do administrador (pasta paulo-adm/), que abre
+// o jogo com ?adm=<chave>; ?adm=0 desliga. No app, onde não há link, liga
+// tocando 7 vezes na versão da tela inicial e digitando a chave.
+// Fica guardado neste aparelho.
 const ADMIN_KEY = 'pwxos7no';
 const isAdmin = () => loadJson(KEYS.admin) === true;
 
@@ -918,7 +927,8 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
+// O app Android já traz os arquivos dentro dele; o cache offline é só do site.
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !isNativeApp()) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
@@ -933,6 +943,34 @@ if (params.has('adm')) {
   history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
 }
 showHome(isAdmin() ? '🧪 Modo administrador ativo (menu ☰ → Escolher minhas pedras)' : '');
+
+let versionTaps = 0;
+let versionTimer = null;
+$('.version').addEventListener('click', () => {
+  versionTaps += 1;
+  clearTimeout(versionTimer);
+  versionTimer = setTimeout(() => { versionTaps = 0; }, 2000);
+  if (versionTaps < 7) return;
+  versionTaps = 0;
+  const code = prompt('Código de administrador (0 desliga):');
+  if (code === null) return;
+  if (code.trim() === ADMIN_KEY) {
+    saveJson(KEYS.admin, true);
+    homeMessage('🧪 Modo administrador ativo (menu ☰ → Escolher minhas pedras)');
+  } else if (code.trim() === '0') {
+    saveJson(KEYS.admin, null);
+    homeMessage('Modo administrador desligado');
+  } else {
+    homeMessage('Código incorreto');
+  }
+});
+
+// No navegador de um Android, oferece o app.
+if (!isNativeApp() && /Android/i.test(navigator.userAgent)) {
+  const link = $('#android-app-link');
+  link.href = ANDROID_APK_URL;
+  link.hidden = false;
+}
 if (invited) {
   $('#code-input').value = invited.toUpperCase().slice(0, 5);
   if ($('#name-input').value.trim()) $('#join-btn').click();

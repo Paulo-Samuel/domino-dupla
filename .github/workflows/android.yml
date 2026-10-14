@@ -1,0 +1,70 @@
+name: App Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm test
+      - name: Copiar o jogo para dentro do app
+        run: npm run android:sync
+
+      # A chave de assinatura fica nos segredos do repositório (veja o README).
+      # Sem ela, o APK sai com a chave de depuração, que muda a cada geração.
+      - name: Chave de assinatura
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/domino.keystore"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/domino.keystore" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sem o segredo ANDROID_KEYSTORE_BASE64: APK assinado com chave de depuração."
+          fi
+
+      - name: Gerar APK
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.${{ github.run_number }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: domino
+        run: ./gradlew assembleRelease --no-daemon
+
+      - run: cp android/app/build/outputs/apk/release/app-release.apk domino-dupla.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: domino-dupla-apk
+          path: domino-dupla.apk
+
+      # Página fixa de download: .../releases/download/android/domino-dupla.apk
+      - name: Publicar o APK
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android
+          name: App Android
+          body: |
+            Baixe o **domino-dupla.apk** no celular Android e abra o arquivo para instalar.
+            Na primeira vez, o Android pede para permitir a instalação de apps desta origem.
+            Versão 1.${{ github.run_number }}.
+          files: domino-dupla.apk
+          make_latest: true

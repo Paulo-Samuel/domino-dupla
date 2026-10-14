@@ -1,0 +1,8 @@
+{
+  "appId": "io.github.paulosamuel.dominodupla",
+  "appName": "Dominó em Dupla",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0b3427"
+  }
+}
