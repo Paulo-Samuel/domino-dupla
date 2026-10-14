@@ -41,7 +41,10 @@ Bom saber:
 
 ## Publicar (GitHub Pages)
 
-Em **Settings → Pages**, escolha *Deploy from a branch*, branch `main`, pasta `/ (root)`. O jogo fica em `https://<usuario>.github.io/domino-dupla/`.
+O jogo mora na pasta `domino-dupla/` do repositório Wand-Enhancer e é publicado pelo workflow `.github/workflows/domino-dupla.yml`:
+
+1. Em **Settings → Pages**, escolha *Source: GitHub Actions*.
+2. A cada push na `master` que mexa em `domino-dupla/`, os testes rodam e o site é publicado em `https://paulo-samuel.github.io/Wand-Enhancer/`.
 
 ## Desenvolvimento
 
