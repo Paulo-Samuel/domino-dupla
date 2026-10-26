@@ -12,23 +12,31 @@ const PIP_SPOTS = {
   6: [[0.25, 0.22], [0.75, 0.22], [0.25, 0.5], [0.75, 0.5], [0.25, 0.78], [0.75, 0.78]],
 };
 
-// Cor das pintas de cada número (modo "pintas coloridas"). Tons escuros o
-// bastante para contrastar com a pedra marfim.
-export const PIP_COLORS = {
-  0: '#1d1b18',
-  1: '#d62839',
-  2: '#1e63c4',
-  3: '#1f8a4c',
-  4: '#e07a00',
-  5: '#7b3fb8',
-  6: '#7a4a1e',
+// Estilos de pedra. "marfim": pedra clara com pintas coloridas escuras.
+// "caramelo": igual ao jogo de bar, pedra cor de caramelo, risco branco com
+// pino de metal e pintas 1 branca, 2 preta, 3 azul, 4 verde, 5 amarela e
+// 6 vermelha. `pips[0]` é só a cor do número 0 nos selos (não tem pinta).
+export const TILE_THEMES = {
+  marfim: {
+    body: '#fbf7ec', edge: '#d9d0b8', fresh: '#fff3c4', divider: '#9b917a', pin: null, plain: '#1d1b18',
+    pips: { 0: '#1d1b18', 1: '#d62839', 2: '#1e63c4', 3: '#1f8a4c', 4: '#e07a00', 5: '#7b3fb8', 6: '#7a4a1e' },
+  },
+  caramelo: {
+    body: '#b98858', edge: '#8a5f36', fresh: '#d9a874', divider: '#f4efe4', pin: '#c9ccd2', plain: '#1b1b1b',
+    pips: { 0: '#3a2614', 1: '#f7f4ec', 2: '#1b1b1b', 3: '#1f5fd6', 4: '#2fb84a', 5: '#f5b70f', 6: '#c8102e' },
+  },
 };
-const PLAIN_PIP = '#1d1b18';
+export const PIP_COLORS = TILE_THEMES.marfim.pips;
+let theme = TILE_THEMES.marfim;
 let coloredPips = true;
 export function setColoredPips(on) {
   coloredPips = !!on;
 }
-export const pipColor = (value) => (coloredPips ? PIP_COLORS[value] : PLAIN_PIP);
+export function setTileTheme(name) {
+  theme = TILE_THEMES[name] ?? TILE_THEMES.marfim;
+  return theme;
+}
+export const pipColor = (value) => (coloredPips ? theme.pips[value] : theme.plain);
 
 function layoutArm(arm, opts) {
   const { xMin, xMax, vdir } = opts;
@@ -121,30 +129,49 @@ export function tileSvg({ x, y, w, h, a, b }, extraClass = '') {
   const bx = vertical ? x : x + half;
   const by = vertical ? y + half : y;
   const divider = vertical
-    ? `<line class="divider" stroke="#9b917a" stroke-width="${half * 0.045}" x1="${x + half * 0.15}" y1="${y + half}" x2="${x + w - half * 0.15}" y2="${y + half}"/>`
-    : `<line class="divider" stroke="#9b917a" stroke-width="${half * 0.045}" x1="${x + half}" y1="${y + half * 0.15}" x2="${x + half}" y2="${y + h - half * 0.15}"/>`;
+    ? `<line class="divider" stroke="${theme.divider}" stroke-width="${half * 0.045}" x1="${x + half * 0.15}" y1="${y + half}" x2="${x + w - half * 0.15}" y2="${y + half}"/>`
+    : `<line class="divider" stroke="${theme.divider}" stroke-width="${half * 0.045}" x1="${x + half}" y1="${y + half * 0.15}" x2="${x + half}" y2="${y + h - half * 0.15}"/>`;
+  const pin = theme.pin
+    ? `<circle class="pin" fill="${theme.pin}" stroke="#6b6f76" stroke-width="${half * 0.02}" cx="${vertical ? x + w / 2 : x + half}" cy="${vertical ? y + half : y + h / 2}" r="${half * 0.08}"/>`
+    : '';
+  const fresh = extraClass.includes('fresh');
   const body = `x="${x + inset / 2}" y="${y + inset / 2}" width="${w - inset}" height="${h - inset}" rx="${half * 0.14}"`;
   return `<g class="tile ${extraClass}">
     <rect class="tile-shadow" fill="rgba(0,0,0,.35)" transform="translate(0 ${half * 0.05})" ${body}/>
-    <rect class="tile-body" fill="#fbf7ec" stroke="#d9d0b8" stroke-width="${half * 0.04}" ${body}/>
-    ${divider}
+    <rect class="tile-body" fill="${fresh ? theme.fresh : theme.body}" stroke="${fresh ? '#ffd166' : theme.edge}" stroke-width="${half * (fresh ? 0.06 : 0.04)}" ${body}/>
+    ${divider}${pin}
     ${pipsSvg(a, ax, ay, half)}${pipsSvg(b, bx, by, half)}
   </g>`;
 }
 
 // anchors: lados ('left'/'right') onde a pedra escolhida pode encaixar; cada
 // um mostra o número da ponta. ends: [esquerda, direita] da mesa.
-export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: showAnchors, ends = null } = {}) {
+// Quantas meias-pedras cabem em cada fileira da cobra, e o enquadramento.
+function frame(board, halfWidth, aspect) {
   const layout = layoutBoard(board, halfWidth);
-  const pad = 0.5;
+  const pad = 0.25;
   const { bbox } = layout;
   // Enquadra a cobra com folga: no começo as pedras ficam grandes e a mesa
-  // vai afastando a câmera conforme cresce (nunca mais perto que ~4 pedras).
-  const minW = Math.min(halfWidth * 2, 8) + pad * 2;
+  // vai afastando a câmera conforme cresce (nunca mais perto que ~3 pedras).
+  const minW = Math.min(halfWidth * 2, 6) + pad * 2;
   const needW = Math.max(minW, bbox.w + pad * 2);
   const needH = bbox.h + pad * 2;
   const vw = Math.max(needW, needH * aspect);
-  const vh = vw / aspect;
+  return { layout, vw, vh: vw / aspect };
+}
+
+export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: showAnchors, ends = null } = {}) {
+  // Escolhe a largura de fileira que deixa as pedras maiores na mesa atual
+  // (no empate, fica a mais perto da sugerida, para a cobra mudar pouco).
+  let best = null;
+  for (let hw = 3; hw <= 10; hw++) {
+    const f = frame(board, hw, aspect);
+    const better = !best || f.vw < best.vw - 0.01
+      || (Math.abs(f.vw - best.vw) <= 0.01 && Math.abs(hw - halfWidth) < Math.abs(best.hw - halfWidth));
+    if (better) best = { ...f, hw };
+  }
+  const { layout, vw, vh } = best;
+  const { bbox } = layout;
   const cx = bbox.x + bbox.w / 2;
   const cy = bbox.y + bbox.h / 2;
   const viewBox = `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`;

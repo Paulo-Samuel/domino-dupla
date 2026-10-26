@@ -279,7 +279,8 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
   overflow: hidden;
 }
 /* Posição absoluta: no Safari, altura em % dentro da grade pode virar zero. */
-.board-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* A faixa de cima (32px) fica para o selo "Pontas", que assim não cobre pedras. */
+.board-svg { position: absolute; top: 32px; left: 0; width: 100%; height: calc(100% - 32px); display: block; }
 .board-empty { color: var(--ink-soft); text-align: center; padding: 20px; font-size: 14px; }
 .board-empty b { color: var(--gold); }
 .board.drop-ready { outline-color: rgba(255, 209, 102, .55); }
@@ -287,7 +288,7 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 /* Pontas da mesa, sempre visíveis no canto */
 .board-ends {
-  position: absolute; top: 8px; left: 8px; z-index: 2;
+  position: absolute; top: 5px; left: 6px; z-index: 2;
   display: flex; align-items: center; gap: 5px;
   padding: 4px 8px 4px 10px; border-radius: 999px;
   background: rgba(6, 26, 19, .7); pointer-events: none;
@@ -296,13 +297,11 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .end-chip {
   min-width: 22px; height: 22px; padding: 0 5px; border-radius: 7px;
   display: inline-grid; place-items: center;
-  background: var(--ivory); color: var(--c, var(--pip));
+  background: var(--tile, var(--ivory)); color: var(--c, var(--pip));
   font-weight: 900; font-size: 14px; border: 2px solid var(--c, var(--ivory-edge));
 }
 
-.tile-body { fill: var(--ivory); stroke: var(--ivory-edge); }
-.divider { stroke: #9b917a; stroke-width: .045; stroke-linecap: round; }
-.tile.fresh .tile-body { fill: #fff3c4; stroke: var(--gold); }
+.divider { stroke-linecap: round; }
 .tile.fresh { animation: drop .35s ease-out; }
 
 .anchor { cursor: pointer; }
@@ -324,7 +323,7 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .status.my-turn b { color: var(--gold); }
 .side-btn {
   border: 2px solid var(--c, var(--gold));
-  background: var(--ivory);
+  background: var(--tile, var(--ivory));
   color: var(--c, #2a2100);
   border-radius: 999px;
   padding: 5px 14px;
@@ -420,7 +419,6 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .reveal-tiles { display: flex; flex-wrap: wrap; gap: 3px; }
 .mini-tile { display: inline-block; width: 34px; }
 .mini-tile svg { width: 100%; height: auto; display: block; }
-.mini-tile .tile-body { stroke: #b9ae94; }
 .empty-hand { font-size: 12px; font-weight: 700; color: #0f8f84; }
 
 .final-score { text-align: center; font-size: 16px; }
@@ -448,6 +446,14 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 /* ---------- Modo teste ---------- */
 .pick-count { text-align: center; }
 .modal .toggle span { font-size: 14px; padding-right: 10px; }
+.theme-pick { display: inline-flex; gap: 6px; padding: 0 !important; }
+.theme-pick button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  border: 2px solid #d9d0b8; background: #fff; color: #2a2a2a;
+}
+.theme-pick button.on { border-color: #12513b; background: #e3f1ea; }
+.theme-pick i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.25); }
 .pick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
 .modal .pick-tile {
   padding: 4px; border-radius: 8px; border: 2px solid transparent; background: #ece6d8;

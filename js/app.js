@@ -12,7 +12,7 @@ import {
   tileId,
 } from './game.js';
 import { BOT_NAMES, GameEngine } from './engine.js';
-import { boardSvg, pipColor, setColoredPips, singleTileSvg } from './board.js';
+import { boardSvg, pipColor, setColoredPips, setTileTheme, singleTileSvg } from './board.js';
 
 const KEYS = {
   match: 'domino-dupla.match.v2',
@@ -76,8 +76,16 @@ function saveJson(key, value) {
   }
 }
 
-const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, ...loadJson(KEYS.settings) };
+const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, tileTheme: 'marfim', ...loadJson(KEYS.settings) };
 setColoredPips(settings.coloredPips);
+applyTileTheme();
+
+// Cor das pedras: o SVG recebe as cores direto; os selos de ponta e botões de
+// lado usam a mesma cor de fundo pela variável --tile.
+function applyTileTheme() {
+  const theme = setTileTheme(settings.tileTheme);
+  document.documentElement.style.setProperty('--tile', theme.body);
+}
 const saveSettings = () => saveJson(KEYS.settings, settings);
 const delay = () => (settings.speed === 'fast' ? 450 : 900);
 
@@ -412,9 +420,11 @@ const nameOf = (view, seat) => (seat === view.seat ? 'Você' : view.players[seat
 
 function boardShape() {
   const rect = boardEl.getBoundingClientRect();
-  const aspect = rect.width && rect.height ? rect.width / rect.height : 1;
-  // Mesa alta e estreita → fileiras curtas e mais pedras grandes.
-  const halfWidth = Math.max(5, Math.min(12, Math.round((1 + Math.sqrt(1 + 90 * aspect)) / 2)));
+  const height = rect.height - 32; // faixa do selo "Pontas" (ver .board-svg no CSS)
+  const aspect = rect.width && height > 0 ? rect.width / height : 1;
+  // Mesa alta e estreita → fileiras curtas (4 pedras no celular em pé) e
+  // pedras grandes; a cobra desce mais fileiras em vez de encolher.
+  const halfWidth = Math.max(4, Math.min(10, Math.round((1 + Math.sqrt(1 + 60 * aspect)) / 2)));
   return { aspect, halfWidth };
 }
 
@@ -808,6 +818,10 @@ function showMenu() {
     <h3>Menu</h3>
     <div class="menu-list">
       <label class="toggle"><span>Som</span><input type="checkbox" id="opt-sound" ${settings.sound ? 'checked' : ''}></label>
+      <div class="toggle"><span>Cor das pedras</span><span class="theme-pick">
+        <button data-theme="marfim" class="${settings.tileTheme === 'marfim' ? 'on' : ''}"><i style="background:#fbf7ec"></i>Marfim</button>
+        <button data-theme="caramelo" class="${settings.tileTheme === 'caramelo' ? 'on' : ''}"><i style="background:#b98858"></i>Caramelo</button>
+      </span></div>
       <label class="toggle"><span>Pintas coloridas</span><input type="checkbox" id="opt-colors" ${settings.coloredPips ? 'checked' : ''}></label>
       ${isLocal ? `
       <label class="toggle"><span>Jogadas rápidas</span><input type="checkbox" id="opt-fast" ${settings.speed === 'fast' ? 'checked' : ''}></label>
@@ -822,6 +836,13 @@ function showMenu() {
     </div>
   `, () => {
     $('#opt-sound').addEventListener('change', (e) => { settings.sound = e.target.checked; saveSettings(); });
+    document.querySelectorAll('.theme-pick button').forEach((btn) => btn.addEventListener('click', () => {
+      settings.tileTheme = btn.dataset.theme;
+      applyTileTheme();
+      saveSettings();
+      document.querySelectorAll('.theme-pick button').forEach((b) => b.classList.toggle('on', b === btn));
+      renderGame();
+    }));
     $('#opt-colors').addEventListener('change', (e) => {
       settings.coloredPips = e.target.checked;
       setColoredPips(settings.coloredPips);
