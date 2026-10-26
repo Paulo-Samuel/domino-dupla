@@ -20,7 +20,7 @@
     <div class="home-logo">
       <img src="icons/icon.svg" alt="" width="84" height="84">
       <h1>Dominó em Dupla</h1>
-      <p>4 jogadores · 2 duplas · até 4 pontos · <span class="version">v11</span></p>
+      <p>4 jogadores · 2 duplas · até 4 pontos · <span class="version">v14</span></p>
     </div>
 
     <label class="field">
@@ -67,13 +67,14 @@
 
     <div class="net-banner" id="net-banner" hidden></div>
 
-    <section class="seat seat-top" data-rel="2"></section>
-
     <section class="middle">
+      <div class="table-top">
+        <div class="board-ends" id="board-ends" aria-live="polite" hidden></div>
+        <div class="seat seat-top" data-rel="2"></div>
+      </div>
       <div class="seat seat-left" data-rel="3"></div>
       <div class="board-wrap">
         <div class="board" id="board" aria-label="Mesa"></div>
-        <div class="board-ends" id="board-ends" aria-live="polite" hidden></div>
       </div>
       <div class="seat seat-right" data-rel="1"></div>
     </section>

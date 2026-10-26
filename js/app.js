@@ -12,7 +12,7 @@ import {
   tileId,
 } from './game.js';
 import { BOT_NAMES, GameEngine } from './engine.js';
-import { boardSvg, pipColor, setColoredPips, singleTileSvg } from './board.js';
+import { THEME_NAMES, boardSvg, pipColor, setColoredPips, setTileTheme, singleTileSvg } from './board.js';
 
 const KEYS = {
   match: 'domino-dupla.match.v2',
@@ -76,8 +76,30 @@ function saveJson(key, value) {
   }
 }
 
-const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, ...loadJson(KEYS.settings) };
+const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, tileTheme: 'marfim', table: 'boteco', ...loadJson(KEYS.settings) };
 setColoredPips(settings.coloredPips);
+applyTileTheme();
+
+// Cor das pedras: o SVG recebe as cores direto; os selos de ponta e botões de
+// lado usam a mesma cor de fundo pela variável --tile.
+function applyTileTheme() {
+  const theme = setTileTheme(settings.tileTheme);
+  document.documentElement.style.setProperty('--tile', theme.body);
+}
+
+// Mesa: o CSS troca as cores por [data-table] no <html>; a barra do celular
+// acompanha a cor do fundo.
+const TABLES = {
+  boteco: { label: 'Boteco', bar: '#2a1810' },
+  madeira: { label: 'Madeira', bar: '#22160e' },
+  feltro: { label: 'Feltro', bar: '#0f3d2e' },
+};
+function applyTable() {
+  if (!TABLES[settings.table]) settings.table = 'boteco';
+  document.documentElement.dataset.table = settings.table;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', TABLES[settings.table].bar);
+}
+applyTable();
 const saveSettings = () => saveJson(KEYS.settings, settings);
 const delay = () => (settings.speed === 'fast' ? 450 : 900);
 
@@ -413,9 +435,10 @@ const nameOf = (view, seat) => (seat === view.seat ? 'Você' : view.players[seat
 function boardShape() {
   const rect = boardEl.getBoundingClientRect();
   const aspect = rect.width && rect.height ? rect.width / rect.height : 1;
-  // Mesa alta e estreita → fileiras curtas e mais pedras grandes.
-  const halfWidth = Math.max(5, Math.min(12, Math.round((1 + Math.sqrt(1 + 90 * aspect)) / 2)));
-  return { aspect, halfWidth };
+  // Mesa alta e estreita → fileiras curtas (4 pedras no celular em pé) e
+  // pedras grandes; a cobra desce mais fileiras em vez de encolher.
+  const halfWidth = Math.max(4, Math.min(10, Math.round((1 + Math.sqrt(1 + 60 * aspect)) / 2)));
+  return { aspect, halfWidth, widthPx: rect.width };
 }
 
 // Na saída da dupla vencedora, os dois parceiros podem jogar a primeira pedra.
@@ -808,6 +831,12 @@ function showMenu() {
     <h3>Menu</h3>
     <div class="menu-list">
       <label class="toggle"><span>Som</span><input type="checkbox" id="opt-sound" ${settings.sound ? 'checked' : ''}></label>
+      <div class="theme-row"><span>Mesa</span><div class="theme-pick table-pick">
+        ${Object.entries(TABLES).map(([key, t]) => `<button data-table="${key}" class="${settings.table === key ? 'on' : ''}"><i class="table-swatch" data-swatch="${key}"></i><small>${t.label}</small></button>`).join('')}
+      </div></div>
+      <div class="theme-row"><span>Cor das pedras</span><div class="theme-pick">
+        ${Object.entries(THEME_NAMES).map(([key, label]) => `<button data-theme="${key}" class="${settings.tileTheme === key ? 'on' : ''}" aria-label="${label}">${singleTileSvg([5, 3], true, key)}<small>${label}</small></button>`).join('')}
+      </div></div>
       <label class="toggle"><span>Pintas coloridas</span><input type="checkbox" id="opt-colors" ${settings.coloredPips ? 'checked' : ''}></label>
       ${isLocal ? `
       <label class="toggle"><span>Jogadas rápidas</span><input type="checkbox" id="opt-fast" ${settings.speed === 'fast' ? 'checked' : ''}></label>
@@ -822,6 +851,19 @@ function showMenu() {
     </div>
   `, () => {
     $('#opt-sound').addEventListener('change', (e) => { settings.sound = e.target.checked; saveSettings(); });
+    document.querySelectorAll('.theme-pick [data-theme]').forEach((btn) => btn.addEventListener('click', () => {
+      settings.tileTheme = btn.dataset.theme;
+      applyTileTheme();
+      saveSettings();
+      document.querySelectorAll('.theme-pick [data-theme]').forEach((b) => b.classList.toggle('on', b === btn));
+      renderGame();
+    }));
+    document.querySelectorAll('.table-pick [data-table]').forEach((btn) => btn.addEventListener('click', () => {
+      settings.table = btn.dataset.table;
+      applyTable();
+      saveSettings();
+      document.querySelectorAll('.table-pick [data-table]').forEach((b) => b.classList.toggle('on', b === btn));
+    }));
     $('#opt-colors').addEventListener('change', (e) => {
       settings.coloredPips = e.target.checked;
       setColoredPips(settings.coloredPips);
