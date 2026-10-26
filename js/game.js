@@ -118,6 +118,8 @@ export function startRound(match, rng = Math.random, { preset = null } = {}) {
     mustOpenWith,
     openers,
     passed: [[], [], [], []],
+    // Histórico da rodada, para a tela mostrar quem jogou o quê.
+    log: [],
     lastAction: null,
     result: null,
     // Conta as ações da rodada; a interface usa para saber o que é novidade.
@@ -212,6 +214,7 @@ export function handOverOpening(match, player) {
   if (!round || round.board || !round.openers?.includes(player)) throw new Error('Não é a saída da dupla');
   round.turn = partnerOf(player);
   round.openers = null;
+  round.log?.push({ player, type: 'handover' });
   round.seq += 1;
   return match;
 }
@@ -236,6 +239,7 @@ export function playMove(match, player, move) {
   round.mustOpenWith = null;
   round.openers = null;
   round.lastAction = { player, type: 'play', tile: tile.slice(), side: move.side };
+  round.log?.push(round.lastAction);
   round.seq += 1;
 
   if (hand.length === 0) {
@@ -266,7 +270,8 @@ export function passTurn(match, player) {
   for (const end of new Set(boardEnds(round.board) ?? [])) {
     if (!round.passed[player].includes(end)) round.passed[player].push(end);
   }
-  round.lastAction = { player, type: 'pass' };
+  round.lastAction = { player, type: 'pass', ends: boardEnds(round.board) };
+  round.log?.push(round.lastAction);
   round.seq += 1;
   round.turn = nextPlayer(player);
   return match;

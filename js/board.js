@@ -12,6 +12,24 @@ const PIP_SPOTS = {
   6: [[0.25, 0.22], [0.75, 0.22], [0.25, 0.5], [0.75, 0.5], [0.25, 0.78], [0.75, 0.78]],
 };
 
+// Cor das pintas de cada número (modo "pintas coloridas"). Tons escuros o
+// bastante para contrastar com a pedra marfim.
+export const PIP_COLORS = {
+  0: '#1d1b18',
+  1: '#d62839',
+  2: '#1e63c4',
+  3: '#1f8a4c',
+  4: '#e07a00',
+  5: '#7b3fb8',
+  6: '#7a4a1e',
+};
+const PLAIN_PIP = '#1d1b18';
+let coloredPips = true;
+export function setColoredPips(on) {
+  coloredPips = !!on;
+}
+export const pipColor = (value) => (coloredPips ? PIP_COLORS[value] : PLAIN_PIP);
+
 function layoutArm(arm, opts) {
   const { xMin, xMax, vdir } = opts;
   let { x, y, dir } = opts;
@@ -53,7 +71,7 @@ function layoutArm(arm, opts) {
     afterTurn = false;
   }
 
-  return { placed, anchor: { x: x + dir * 0.6, y } };
+  return { placed, anchor: { x: x + dir * 0.75, y } };
 }
 
 export function layoutBoard(board, halfWidth = 7) {
@@ -85,8 +103,9 @@ export function layoutBoard(board, halfWidth = 7) {
 
 function pipsSvg(value, x, y, size) {
   const r = size * 0.1;
+  const fill = pipColor(value);
   return PIP_SPOTS[value]
-    .map(([px, py]) => `<circle class="pip" fill="#1d1b18" cx="${x + px * size}" cy="${y + py * size}" r="${r}"/>`)
+    .map(([px, py]) => `<circle class="pip" fill="${fill}" cx="${x + px * size}" cy="${y + py * size}" r="${r}"/>`)
     .join('');
 }
 
@@ -113,13 +132,15 @@ export function tileSvg({ x, y, w, h, a, b }, extraClass = '') {
   </g>`;
 }
 
-export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: showAnchors } = {}) {
+// anchors: lados ('left'/'right') onde a pedra escolhida pode encaixar; cada
+// um mostra o número da ponta. ends: [esquerda, direita] da mesa.
+export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: showAnchors, ends = null } = {}) {
   const layout = layoutBoard(board, halfWidth);
-  const pad = 0.4;
+  const pad = 0.5;
   const { bbox } = layout;
-  // Largura fixa da mesa para as pedras não mudarem de tamanho a cada jogada;
-  // só encolhe quando a cobra fica mais alta que a área disponível.
-  const minW = halfWidth * 2 + pad * 2;
+  // Enquadra a cobra com folga: no começo as pedras ficam grandes e a mesa
+  // vai afastando a câmera conforme cresce (nunca mais perto que ~4 pedras).
+  const minW = Math.min(halfWidth * 2, 8) + pad * 2;
   const needW = Math.max(minW, bbox.w + pad * 2);
   const needH = bbox.h + pad * 2;
   const vw = Math.max(needW, needH * aspect);
@@ -140,9 +161,13 @@ export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: s
     anchorMarkup = showAnchors
       .map((side) => {
         const { x, y } = layout.anchors[side];
+        const value = ends ? ends[side === 'left' ? 0 : 1] : null;
+        const label = value === null ? (side === 'left' ? '◀' : '▶') : value;
+        const color = value === null ? '#ffd166' : pipColor(value);
         return `<g class="anchor" data-side="${side}">
-          <circle cx="${x}" cy="${y}" r="0.55"/>
-          <text x="${x}" y="${y}">${side === 'left' ? '◀' : '▶'}</text>
+          <circle class="anchor-ring" cx="${x}" cy="${y}" r="0.62" stroke="${color}"/>
+          <circle class="anchor-dot" cx="${x}" cy="${y}" r="0.42" fill="${color}"/>
+          <text x="${x}" y="${y}">${label}</text>
         </g>`;
       })
       .join('');

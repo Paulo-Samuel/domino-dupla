@@ -172,6 +172,7 @@ export class GameEngine {
       mustOpenWith: round.mustOpenWith,
       openers: round.openers ?? null,
       lastAction: round.lastAction,
+      log: round.log ?? [],
       seq: round.seq,
       result: round.result ? { ...round.result, hands: round.hands.map((h) => h.slice()) } : null,
     };

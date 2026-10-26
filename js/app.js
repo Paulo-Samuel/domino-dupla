@@ -4,6 +4,7 @@ import {
   isDouble,
   partnerOf,
   boardEnds,
+  boardTiles,
   createDeck,
   legalMovesFor,
   handPips,
@@ -11,7 +12,7 @@ import {
   tileId,
 } from './game.js';
 import { BOT_NAMES, GameEngine } from './engine.js';
-import { boardSvg, singleTileSvg } from './board.js';
+import { boardSvg, pipColor, setColoredPips, singleTileSvg } from './board.js';
 
 const KEYS = {
   match: 'domino-dupla.match.v2',
@@ -75,7 +76,8 @@ function saveJson(key, value) {
   }
 }
 
-const settings = { sound: true, speed: 'normal', level: 2, ...loadJson(KEYS.settings) };
+const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, ...loadJson(KEYS.settings) };
+setColoredPips(settings.coloredPips);
 const saveSettings = () => saveJson(KEYS.settings, settings);
 const delay = () => (settings.speed === 'fast' ? 450 : 900);
 
@@ -97,6 +99,16 @@ let selectedId = null;
 let lastActionKey = null;
 let resultShownFor = null;
 const bubbles = new Map();
+const passFlash = new Set();
+// Animação da pedra indo para a mesa: quem jogou e de onde ela saiu.
+let pendingFly = null;
+let flyFrom = null;
+let wasMyTurn = false;
+let lastScores = null;
+// Arrastar pedra da mão até a mesa.
+let drag = null;
+let suppressClick = false;
+const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 function show(name) {
   for (const [key, el] of Object.entries(screens)) el.hidden = key !== name;
@@ -153,6 +165,11 @@ function currentView() {
 
 function sendPlay(move) {
   const view = currentView();
+  const id = tileId(move.tile);
+  if (flyFrom?.id !== id) {
+    const el = handEl.querySelector(`[data-id="${id}"]`);
+    flyFrom = el ? { id, rect: el.getBoundingClientRect() } : null;
+  }
   selectedId = null;
   if (mode === 'local') localEngine.play(0, move, view.seq);
   else session.play(move, view.seq);
@@ -300,10 +317,10 @@ function renderLobby() {
     let body;
     let actions = '';
     if (s.kind === 'human') {
-      body = `<b>${esc(s.name)}</b>${s.isMe ? ' <small>(você)</small>' : ''}${s.online ? '' : ' <small class="off">fora</small>'}`;
+      body = `<span class="avatar">${esc([...s.name][0] ?? '?')}</span><b>${esc(s.name)}</b>${s.isMe ? ' <small>(você)</small>' : ''}${s.online ? '' : ' <small class="off">fora</small>'}`;
       if (lobby.isHost && !s.isMe && lobby.phase === 'lobby') actions = `<button data-act="clear" data-seat="${i}">Tirar</button>`;
     } else if (s.kind === 'bot') {
-      body = `🤖 <b>${esc(s.name)}</b> <small>robô</small>`;
+      body = `<span class="avatar">🤖</span><b>${esc(s.name)}</b> <small>robô</small>`;
       if (lobby.phase === 'lobby') {
         actions = `<button data-act="sit" data-seat="${i}">Sentar aqui</button>`;
         if (lobby.isHost) actions += `<button data-act="clear" data-seat="${i}">Tirar</button>`;
@@ -418,19 +435,101 @@ function noteNewAction(view) {
   selectedId = null;
   const last = view.lastAction;
   if (first || !last) return;
-  if (last.type === 'play') clack();
-  else {
+  if (last.type === 'play') {
+    clack();
+    pendingFly = { player: last.player, id: tileId(last.tile) };
+  } else if (last.type === 'pass') {
     const rel = relOf(view, last.player);
     const text = rel === 0 ? 'Passei' : 'Passo!';
     bubbles.set(rel, text);
+    passFlash.add(rel);
     setTimeout(() => {
-      if (bubbles.get(rel) === text) {
-        bubbles.delete(rel);
-        const v = currentView();
-        if (v) renderSeats(v);
-      }
-    }, 1400);
+      passFlash.delete(rel);
+      if (bubbles.get(rel) === text) bubbles.delete(rel);
+      const v = currentView();
+      if (v) renderSeats(v);
+    }, 1600);
   }
+}
+
+function showToast(text, kind = '') {
+  const el = $('#toast');
+  el.textContent = text;
+  el.className = `toast ${kind}`;
+  el.hidden = false;
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => { el.hidden = true; }, 1500);
+}
+
+// Avisa (com vibração no Android) quando passa a ser a sua vez.
+function announceTurn(view) {
+  const mine = canActNow(view, view.seat);
+  if (mine && !wasMyTurn && myLegalMoves(view).length) {
+    showToast(isOpener(view, view.seat) ? 'Sua dupla sai!' : 'Sua vez!', 'turn');
+    try { navigator.vibrate?.(35); } catch { /* sem vibração */ }
+  }
+  // Já jogou (ou a rodada acabou): o aviso de vez some na hora.
+  const toast = $('#toast');
+  if (!mine && toast.classList.contains('turn')) toast.hidden = true;
+  wasMyTurn = mine;
+}
+
+function bumpScores(view, myTeam) {
+  const now = [view.scores[myTeam], view.scores[1 - myTeam]];
+  if (lastScores) {
+    ['#score-us', '#score-them'].forEach((sel, i) => {
+      if (now[i] === lastScores[i]) return;
+      const el = $(sel);
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    });
+  }
+  lastScores = now;
+}
+
+// Pedra "voando" da mão (ou do jogador) até o lugar dela na mesa.
+function runFly(view) {
+  const fly = pendingFly;
+  pendingFly = null;
+  if (!fly || reduceMotion() || !document.body.animate) return;
+  const target = boardEl.querySelector('.tile.fresh');
+  const to = target?.getBoundingClientRect();
+  if (!to?.width) return;
+  let from = null;
+  if (fly.player === view.seat && flyFrom?.id === fly.id) from = flyFrom.rect;
+  else {
+    const rel = relOf(view, fly.player);
+    from = (rel === 0 ? handEl : document.querySelector(`.seat[data-rel="${rel}"]`))?.getBoundingClientRect();
+  }
+  flyFrom = null;
+  if (!from) return;
+
+  const ghost = document.createElement('div');
+  ghost.className = 'fly';
+  ghost.innerHTML = freshTileSvg(target, to);
+  Object.assign(ghost.style, { left: `${to.left}px`, top: `${to.top}px`, width: `${to.width}px`, height: `${to.height}px` });
+  document.body.append(ghost);
+  target.style.opacity = '0';
+  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+  const anim = ghost.animate(
+    [{ transform: `translate(${dx}px, ${dy}px) scale(1.15)`, opacity: 0.85 }, { transform: 'none', opacity: 1 }],
+    { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' },
+  );
+  const done = () => {
+    ghost.remove();
+    target.style.opacity = '';
+  };
+  anim.onfinish = done;
+  anim.oncancel = done;
+}
+
+// Copia o desenho da pedra recém-jogada (com a orientação da mesa) para o fantasma.
+function freshTileSvg(target, rect) {
+  const bb = target.getBBox();
+  const markup = target.outerHTML.replace('class="tile fresh"', 'class="tile"');
+  return `<svg viewBox="${bb.x} ${bb.y} ${bb.width} ${bb.height}" width="${rect.width}" height="${rect.height}" xmlns="http://www.w3.org/2000/svg">${markup}</svg>`;
 }
 
 function renderGame() {
@@ -455,6 +554,9 @@ function renderGame() {
   renderBoard(view);
   renderHand(view);
   renderStatus(view);
+  bumpScores(view, myTeam);
+  announceTurn(view);
+  runFly(view);
 
   if (view.result) {
     const key = `${view.roundNo}`;
@@ -471,15 +573,31 @@ function renderGame() {
   }
 }
 
+// Lados da mesa onde a pedra escolhida (tocada ou arrastada) encaixa.
+function selectedSides(view) {
+  if (!selectedId || !view.board) return null;
+  const sides = myLegalMoves(view).filter((m) => tileId(m.tile) === selectedId).map((m) => m.side);
+  return sides.length ? sides : null;
+}
+
+const chip = (n) => `<span class="end-chip" style="--c:${pipColor(n)}">${n}</span>`;
+
 function renderBoard(view) {
   const last = view.lastAction?.type === 'play' ? tileId(view.lastAction.tile) : null;
-  const anchors = selectedId && view.board ? ['left', 'right'] : null;
+  const endsEl = $('#board-ends');
   if (!view.board) {
-    const opener = view.mustOpenWith ? 'Quem tem a bucha de sena <b>6|6</b> abre o jogo' : 'Mesa vazia';
+    const opener = view.mustOpenWith
+      ? 'Quem tem a bucha de sena <b>6|6</b> abre o jogo'
+      : view.openers ? 'A dupla que venceu sai com qualquer pedra' : 'Mesa vazia';
     boardEl.innerHTML = `<div class="board-empty">${opener}</div>`;
+    endsEl.hidden = true;
     return;
   }
-  boardEl.innerHTML = boardSvg(view.board, { ...boardShape(), freshId: last, anchors });
+  const ends = boardEnds(view.board);
+  endsEl.hidden = false;
+  endsEl.innerHTML = `<span class="ends-label">Pontas</span>${chip(ends[0])}${chip(ends[1])}`;
+  const anchors = selectedSides(view);
+  boardEl.innerHTML = boardSvg(view.board, { ...boardShape(), freshId: last, anchors, ends });
   boardEl.querySelectorAll('.anchor').forEach((el) => {
     el.addEventListener('click', () => onSidePick(el.dataset.side));
   });
@@ -498,6 +616,7 @@ function renderSeats(view) {
     seatEl.classList.toggle('team-them', teamOf(seat) !== teamOf(view.seat));
     seatEl.classList.toggle('active', canActNow(view, seat));
     seatEl.classList.toggle('away', !player.online);
+    seatEl.classList.toggle('passed', passFlash.has(rel));
     seatEl.innerHTML = `
       <div class="seat-head">
         <span class="avatar">${esc([...player.name][0] ?? '?')}</span>
@@ -545,11 +664,11 @@ function renderStatus(view) {
     if (!myLegalMoves(view).length) text = 'Sem pedra para jogar… você passa';
     else if (selectedId) {
       const [l, r] = boardEnds(view.board);
-      text = `Escolha a ponta:
-        <button class="side-btn" data-side="left">◀ ponta ${l}</button>
-        <button class="side-btn" data-side="right">ponta ${r} ▶</button>`;
+      text = `Encaixar em qual ponta?
+        <button class="side-btn" data-side="left" style="--c:${pipColor(l)}">◀ ${l}</button>
+        <button class="side-btn" data-side="right" style="--c:${pipColor(r)}">${r} ▶</button>`;
     } else if (!view.board && view.mustOpenWith) text = 'Sua vez: abra com a bucha de sena 6|6';
-    else text = 'Sua vez';
+    else text = '<b>Sua vez</b> · toque ou arraste uma pedra até a mesa';
   } else {
     const last = view.lastAction;
     let lastText = '';
@@ -561,6 +680,7 @@ function renderStatus(view) {
     text = `${lastText}vez de ${esc(nameOf(view, view.turn))}…`;
   }
   statusEl.innerHTML = text;
+  statusEl.classList.toggle('my-turn', canActNow(view, view.seat));
   $('#handover-btn')?.addEventListener('click', () => {
     const v = currentView();
     if (mode === 'local') localEngine.handOver(0, v.seq);
@@ -572,6 +692,10 @@ function renderStatus(view) {
 }
 
 function onTileTap(id) {
+  if (suppressClick) {
+    suppressClick = false;
+    return;
+  }
   const view = currentView();
   if (!view) return;
   const moves = myLegalMoves(view).filter((m) => tileId(m.tile) === id);
@@ -598,7 +722,8 @@ function onSidePick(side) {
 }
 
 // ---------- Janelas ----------
-function openModal(html, onReady) {
+function openModal(html, onReady, { sheet = false } = {}) {
+  modal.classList.toggle('sheet', sheet);
   modalBody.innerHTML = html;
   if (!modal.open) modal.showModal();
   onReady?.();
@@ -683,6 +808,7 @@ function showMenu() {
     <h3>Menu</h3>
     <div class="menu-list">
       <label class="toggle"><span>Som</span><input type="checkbox" id="opt-sound" ${settings.sound ? 'checked' : ''}></label>
+      <label class="toggle"><span>Pintas coloridas</span><input type="checkbox" id="opt-colors" ${settings.coloredPips ? 'checked' : ''}></label>
       ${isLocal ? `
       <label class="toggle"><span>Jogadas rápidas</span><input type="checkbox" id="opt-fast" ${settings.speed === 'fast' ? 'checked' : ''}></label>
       <label class="toggle"><span>Adversários espertos</span><input type="checkbox" id="opt-level" ${settings.level >= 2 ? 'checked' : ''}></label>` : `
@@ -696,6 +822,12 @@ function showMenu() {
     </div>
   `, () => {
     $('#opt-sound').addEventListener('change', (e) => { settings.sound = e.target.checked; saveSettings(); });
+    $('#opt-colors').addEventListener('change', (e) => {
+      settings.coloredPips = e.target.checked;
+      setColoredPips(settings.coloredPips);
+      saveSettings();
+      renderGame();
+    });
     $('#opt-fast')?.addEventListener('change', (e) => {
       settings.speed = e.target.checked ? 'fast' : 'normal';
       localEngine.delay = delay();
@@ -728,8 +860,136 @@ function showMenu() {
       if (isHost && !confirm('Encerrar a sala para todos?')) return;
       leaveOnline();
     });
-  });
+  }, { sheet: true });
 }
+
+// ---------- Jogadas da rodada ----------
+const SIDE_TEXT = { center: 'para abrir', left: 'na ponta esquerda', right: 'na ponta direita' };
+
+function showLog() {
+  const view = currentView();
+  if (!view) return;
+  const table = boardTiles(view.board);
+  const counts = [0, 1, 2, 3, 4, 5, 6].map((n) => {
+    const out = table.filter((t) => t.includes(n)).length;
+    const mine = view.hand.filter((t) => t.includes(n)).length;
+    return `<div class="count-row">
+      ${chip(n)}
+      <span class="count-bar"><i style="width:${(out / 7) * 100}%;background:${pipColor(n)}"></i></span>
+      <small>${out}/7 na mesa${mine ? ` · ${mine} na sua mão` : ''}</small>
+    </div>`;
+  }).join('');
+
+  const entries = [...(view.log ?? [])].reverse().map((e) => {
+    const who = `<b>${esc(nameOf(view, e.player))}</b>`;
+    if (e.type === 'play') {
+      return `<li>${who} jogou <span class="mini-tile">${singleTileSvg(e.tile, false)}</span> ${SIDE_TEXT[e.side] ?? ''}</li>`;
+    }
+    if (e.type === 'pass') {
+      const ends = e.ends ? [...new Set(e.ends)] : [];
+      const missing = ends.length ? ` <small>(não tinha ${ends.join(' nem ')})</small>` : '';
+      return `<li class="pass">${who} passou${missing}</li>`;
+    }
+    return `<li>${who} deixou a dupla sair</li>`;
+  }).join('');
+
+  openModal(`
+    <h3>Rodada ${view.roundNo}</h3>
+    <p class="small">Quantas pedras de cada número já saíram:</p>
+    <div class="counts">${counts}</div>
+    <h4>Jogadas</h4>
+    ${entries ? `<ol class="log">${entries}</ol>` : '<p class="small">Ninguém jogou ainda.</p>'}
+    <button class="primary" id="log-close">Fechar</button>
+  `, () => {
+    $('#log-close').addEventListener('click', closeModal);
+  }, { sheet: true });
+}
+
+// ---------- Arrastar pedra até a mesa ----------
+function dropSide(x, y) {
+  const r = boardEl.getBoundingClientRect();
+  if (x < r.left || x > r.right || y < r.top || y > r.bottom) return null;
+  if (drag.moves.length === 1) return drag.moves[0].side;
+  let best = null;
+  let bestDist = Infinity;
+  for (const m of drag.moves) {
+    const a = boardEl.querySelector(`.anchor[data-side="${m.side}"]`)?.getBoundingClientRect();
+    if (!a) continue;
+    const d = Math.hypot(a.left + a.width / 2 - x, a.top + a.height / 2 - y);
+    if (d < bestDist) {
+      bestDist = d;
+      best = m.side;
+    }
+  }
+  return best;
+}
+
+function endDrag() {
+  drag?.ghost?.remove();
+  drag?.btn.classList.remove('dragging');
+  boardEl.classList.remove('drop-ready', 'drop-hot');
+  drag = null;
+}
+
+handEl.addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest('.hand-tile');
+  if (!btn || e.button > 0) return;
+  drag = { id: btn.dataset.id, btn, x0: e.clientX, y0: e.clientY, pointerId: e.pointerId, active: false };
+});
+
+window.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  if (!drag.active) {
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 10) return;
+    const view = currentView();
+    const moves = view ? myLegalMoves(view).filter((m) => tileId(m.tile) === drag.id) : [];
+    if (!moves.length) {
+      drag = null;
+      return;
+    }
+    const r = drag.btn.getBoundingClientRect();
+    Object.assign(drag, { active: true, moves, dx: e.clientX - r.left, dy: e.clientY - r.top });
+    drag.ghost = document.createElement('div');
+    drag.ghost.className = 'drag-ghost';
+    drag.ghost.style.width = `${r.width}px`;
+    drag.ghost.innerHTML = drag.btn.innerHTML;
+    document.body.append(drag.ghost);
+    drag.btn.classList.add('dragging');
+    selectedId = drag.id;
+    renderBoard(view);
+    boardEl.classList.add('drop-ready');
+  }
+  drag.ghost.style.transform = `translate(${e.clientX - drag.dx}px, ${e.clientY - drag.dy}px)`;
+  const side = dropSide(e.clientX, e.clientY);
+  boardEl.classList.toggle('drop-hot', !!side);
+  boardEl.querySelectorAll('.anchor').forEach((a) => a.classList.toggle('hot', a.dataset.side === side));
+});
+
+window.addEventListener('pointerup', (e) => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  if (!drag.active) {
+    drag = null;
+    return;
+  }
+  suppressClick = true;
+  setTimeout(() => { suppressClick = false; }, 400);
+  const side = dropSide(e.clientX, e.clientY);
+  const move = side && drag.moves.find((m) => m.side === side);
+  if (move) flyFrom = { id: drag.id, rect: drag.ghost.getBoundingClientRect() };
+  endDrag();
+  if (move) sendPlay(move);
+  else {
+    selectedId = null;
+    renderGame();
+  }
+});
+
+window.addEventListener('pointercancel', () => {
+  if (!drag) return;
+  endDrag();
+  selectedId = null;
+  renderGame();
+});
 
 // ---------- Modo administrador ----------
 // No site, liga pelo link pessoal do administrador (pasta paulo-adm/), que abre
@@ -939,6 +1199,7 @@ $('#code-input').addEventListener('input', (e) => {
 });
 $('#home-rules-btn').addEventListener('click', () => showRules());
 $('#menu-btn').addEventListener('click', showMenu);
+$('#log-btn').addEventListener('click', showLog);
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {
