@@ -232,7 +232,7 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .team-us .seat-name small:not(.off) { color: var(--us); }
 .seat-count {
   min-width: 20px; padding: 0 6px; border-radius: 10px;
-  background: rgba(0,0,0,.35); font-size: 12px; text-align: center;
+  background: rgba(0,0,0,.35); color: #f3efe4; font-size: 12px; text-align: center;
 }
 
 .backs { display: flex; gap: 2px; }
@@ -480,6 +480,11 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .theme-pick svg { width: 24px; height: auto; display: block; }
 .theme-pick small { font-size: 10px; font-weight: 700; }
 .modal .theme-pick button.on { border-color: #12513b; background: #e3f1ea; }
+.table-pick { grid-template-columns: repeat(3, 1fr); }
+.table-swatch { display: block; width: 100%; max-width: 64px; height: 30px; border-radius: 7px; border: 2px solid rgba(0,0,0,.25); }
+.table-swatch[data-swatch="boteco"] { background: linear-gradient(135deg, #ffd23f, #f2a900); border-color: #c98f00; }
+.table-swatch[data-swatch="madeira"] { background: repeating-linear-gradient(0deg, #8a5a2e 0 9px, #7a4e27 9px 10px); border-color: #4f3118; }
+.table-swatch[data-swatch="feltro"] { background: radial-gradient(#1b6a4e, #0b3427); border-color: #0b3427; }
 .pick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
 .modal .pick-tile {
   padding: 4px; border-radius: 8px; border: 2px solid transparent; background: #ece6d8;
@@ -513,4 +518,52 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Mesas ---------- */
+/* Boteco: mesa de metal amarela de bar, num ambiente marrom. Os textos em
+   cima da mesa ficam escuros para dar leitura no amarelo. */
+:root[data-table="boteco"] {
+  --felt: #4a2b19;
+  --felt-light: #6a3f24;
+  --felt-dark: #24140b;
+  --panel: rgba(20, 10, 4, 0.55);
+}
+:root[data-table="boteco"] .middle {
+  position: relative;
+  --ink: #2b1c00;
+  --ink-soft: rgba(43, 28, 0, .72);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 88% 86%, transparent 0 24px, rgba(140, 84, 0, .22) 25px 28px, transparent 29px),
+    linear-gradient(135deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(180deg, #ffcf33, #f3ac00);
+  border: 3px solid #c98f00;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .25), inset 0 -10px 24px rgba(150, 90, 0, .25), 0 10px 24px rgba(0, 0, 0, .45);
+}
+:root[data-table="boteco"] .middle .board-ends { background: rgba(80, 48, 0, .16); }
+:root[data-table="boteco"] .middle .team-us .seat-name small:not(.off) { color: #0b6158; }
+:root[data-table="boteco"] .middle .seat.active { border-color: #3b2416; background: rgba(59, 36, 22, .12); box-shadow: 0 0 0 4px rgba(59, 36, 22, .12); }
+:root[data-table="boteco"] .middle .board-empty b { color: #7a3d00; }
+:root[data-table="boteco"] .board.drop-ready { outline-color: rgba(59, 36, 22, .55); }
+:root[data-table="boteco"] .board.drop-hot { outline-color: #3b2416; box-shadow: inset 0 0 40px rgba(59, 36, 22, .2); }
+:root[data-table="boteco"] .anchor-ring { fill: rgba(255, 255, 255, .35); }
+:root[data-table="boteco"] .anchor.hot .anchor-ring { fill: rgba(59, 36, 22, .25); stroke: #3b2416; }
+
+/* Madeira: tampo de tábuas. */
+:root[data-table="madeira"] {
+  --felt: #3a2617;
+  --felt-light: #563823;
+  --felt-dark: #1e130b;
+  --panel: rgba(20, 10, 4, 0.55);
+}
+:root[data-table="madeira"] .middle {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .18) 0 2px, transparent 2px 64px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .03) 0 3px, rgba(0, 0, 0, .03) 3px 7px),
+    linear-gradient(180deg, #8f5d30, #6e4522);
+  border: 3px solid #4f3118;
+  border-radius: 16px;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, .35), 0 10px 24px rgba(0, 0, 0, .45);
 }

@@ -76,7 +76,7 @@ function saveJson(key, value) {
   }
 }
 
-const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, tileTheme: 'marfim', ...loadJson(KEYS.settings) };
+const settings = { sound: true, speed: 'normal', level: 2, coloredPips: true, tileTheme: 'marfim', table: 'boteco', ...loadJson(KEYS.settings) };
 setColoredPips(settings.coloredPips);
 applyTileTheme();
 
@@ -86,6 +86,20 @@ function applyTileTheme() {
   const theme = setTileTheme(settings.tileTheme);
   document.documentElement.style.setProperty('--tile', theme.body);
 }
+
+// Mesa: o CSS troca as cores por [data-table] no <html>; a barra do celular
+// acompanha a cor do fundo.
+const TABLES = {
+  boteco: { label: 'Boteco', bar: '#2a1810' },
+  madeira: { label: 'Madeira', bar: '#22160e' },
+  feltro: { label: 'Feltro', bar: '#0f3d2e' },
+};
+function applyTable() {
+  if (!TABLES[settings.table]) settings.table = 'boteco';
+  document.documentElement.dataset.table = settings.table;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', TABLES[settings.table].bar);
+}
+applyTable();
 const saveSettings = () => saveJson(KEYS.settings, settings);
 const delay = () => (settings.speed === 'fast' ? 450 : 900);
 
@@ -817,6 +831,9 @@ function showMenu() {
     <h3>Menu</h3>
     <div class="menu-list">
       <label class="toggle"><span>Som</span><input type="checkbox" id="opt-sound" ${settings.sound ? 'checked' : ''}></label>
+      <div class="theme-row"><span>Mesa</span><div class="theme-pick table-pick">
+        ${Object.entries(TABLES).map(([key, t]) => `<button data-table="${key}" class="${settings.table === key ? 'on' : ''}"><i class="table-swatch" data-swatch="${key}"></i><small>${t.label}</small></button>`).join('')}
+      </div></div>
       <div class="theme-row"><span>Cor das pedras</span><div class="theme-pick">
         ${Object.entries(THEME_NAMES).map(([key, label]) => `<button data-theme="${key}" class="${settings.tileTheme === key ? 'on' : ''}" aria-label="${label}">${singleTileSvg([5, 3], true, key)}<small>${label}</small></button>`).join('')}
       </div></div>
@@ -834,12 +851,18 @@ function showMenu() {
     </div>
   `, () => {
     $('#opt-sound').addEventListener('change', (e) => { settings.sound = e.target.checked; saveSettings(); });
-    document.querySelectorAll('.theme-pick button').forEach((btn) => btn.addEventListener('click', () => {
+    document.querySelectorAll('.theme-pick [data-theme]').forEach((btn) => btn.addEventListener('click', () => {
       settings.tileTheme = btn.dataset.theme;
       applyTileTheme();
       saveSettings();
-      document.querySelectorAll('.theme-pick button').forEach((b) => b.classList.toggle('on', b === btn));
+      document.querySelectorAll('.theme-pick [data-theme]').forEach((b) => b.classList.toggle('on', b === btn));
       renderGame();
+    }));
+    document.querySelectorAll('.table-pick [data-table]').forEach((btn) => btn.addEventListener('click', () => {
+      settings.table = btn.dataset.table;
+      applyTable();
+      saveSettings();
+      document.querySelectorAll('.table-pick [data-table]').forEach((b) => b.classList.toggle('on', b === btn));
     }));
     $('#opt-colors').addEventListener('change', (e) => {
       settings.coloredPips = e.target.checked;
