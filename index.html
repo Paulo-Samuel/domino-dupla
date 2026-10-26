@@ -20,7 +20,7 @@
     <div class="home-logo">
       <img src="icons/icon.svg" alt="" width="84" height="84">
       <h1>Dominó em Dupla</h1>
-      <p>4 jogadores · 2 duplas · até 4 pontos · <span class="version">v10</span></p>
+      <p>4 jogadores · 2 duplas · até 4 pontos · <span class="version">v11</span></p>
     </div>
 
     <label class="field">
@@ -29,12 +29,21 @@
     </label>
 
     <button class="big-btn primary" id="resume-btn" hidden></button>
-    <button class="big-btn" id="local-btn">🤖 Jogar contra o computador</button>
-    <button class="big-btn" id="host-btn">📡 Criar sala online</button>
+    <button class="card-btn" id="local-btn">
+      <span class="card-icon" aria-hidden="true">🤖</span>
+      <span class="card-text"><b>Contra o computador</b><small>Você e sua dupla contra dois robôs. Funciona sem internet.</small></span>
+    </button>
+    <button class="card-btn" id="host-btn">
+      <span class="card-icon" aria-hidden="true">📡</span>
+      <span class="card-text"><b>Criar sala online</b><small>Chame os amigos: cada um joga no seu celular.</small></span>
+    </button>
 
-    <div class="join-row">
-      <input id="code-input" maxlength="5" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="CÓDIGO">
-      <button class="big-btn" id="join-btn">Entrar</button>
+    <div class="join-card">
+      <span class="join-label">Entrar na sala de um amigo</span>
+      <div class="join-row">
+        <input id="code-input" maxlength="5" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="CÓDIGO">
+        <button class="big-btn" id="join-btn">Entrar</button>
+      </div>
     </div>
 
     <p class="home-msg" id="home-msg" role="alert"></p>
@@ -52,6 +61,7 @@
         <div class="score-sep">×</div>
         <div class="team them"><span class="team-score" id="score-them">0</span><span class="team-name">Eles</span></div>
       </div>
+      <button class="icon-btn" id="log-btn" aria-label="Jogadas da rodada">📜</button>
       <div class="round-tag" id="round-tag">Rodada 1</div>
     </header>
 
@@ -61,7 +71,10 @@
 
     <section class="middle">
       <div class="seat seat-left" data-rel="3"></div>
-      <div class="board" id="board" aria-label="Mesa"></div>
+      <div class="board-wrap">
+        <div class="board" id="board" aria-label="Mesa"></div>
+        <div class="board-ends" id="board-ends" aria-live="polite" hidden></div>
+      </div>
       <div class="seat seat-right" data-rel="1"></div>
     </section>
 
@@ -70,6 +83,8 @@
       <div class="hand" id="hand" role="group" aria-label="Suas pedras"></div>
     </section>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <dialog id="modal" class="modal">
     <div class="modal-body" id="modal-body"></div>

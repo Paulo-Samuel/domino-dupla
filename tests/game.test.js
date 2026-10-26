@@ -215,3 +215,16 @@ test('na saída, um parceiro pode deixar o outro sair', () => {
   assert.equal(match.round.openers, null);
   assert.ok(!canAct(match.round, 2));
 });
+
+test('histórico da rodada registra jogadas e passes em ordem', () => {
+  const match = createMatch();
+  match.roundNo = 1;
+  match.round = {
+    hands: [[[6, 6], [6, 2]], [[1, 1], [0, 0]], [[2, 4], [5, 5]], [[3, 3], [4, 4]]],
+    board: null, turn: 0, mustOpenWith: null, openers: null, passed: [[], [], [], []], log: [], lastAction: null, result: null, seq: 0,
+  };
+  playMove(match, 0, { tile: [6, 6], side: 'center' });
+  passTurn(match, 1);
+  assert.deepEqual(match.round.log.map((e) => `${e.player}:${e.type}`), ['0:play', '1:pass']);
+  assert.deepEqual(match.round.log[0].tile, [6, 6]);
+});
