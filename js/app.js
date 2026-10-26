@@ -12,7 +12,7 @@ import {
   tileId,
 } from './game.js';
 import { BOT_NAMES, GameEngine } from './engine.js';
-import { boardSvg, pipColor, setColoredPips, setTileTheme, singleTileSvg } from './board.js';
+import { THEME_NAMES, boardSvg, pipColor, setColoredPips, setTileTheme, singleTileSvg } from './board.js';
 
 const KEYS = {
   match: 'domino-dupla.match.v2',
@@ -420,12 +420,11 @@ const nameOf = (view, seat) => (seat === view.seat ? 'Você' : view.players[seat
 
 function boardShape() {
   const rect = boardEl.getBoundingClientRect();
-  const height = rect.height - 32; // faixa do selo "Pontas" (ver .board-svg no CSS)
-  const aspect = rect.width && height > 0 ? rect.width / height : 1;
+  const aspect = rect.width && rect.height ? rect.width / rect.height : 1;
   // Mesa alta e estreita → fileiras curtas (4 pedras no celular em pé) e
   // pedras grandes; a cobra desce mais fileiras em vez de encolher.
   const halfWidth = Math.max(4, Math.min(10, Math.round((1 + Math.sqrt(1 + 60 * aspect)) / 2)));
-  return { aspect, halfWidth };
+  return { aspect, halfWidth, widthPx: rect.width };
 }
 
 // Na saída da dupla vencedora, os dois parceiros podem jogar a primeira pedra.
@@ -818,10 +817,9 @@ function showMenu() {
     <h3>Menu</h3>
     <div class="menu-list">
       <label class="toggle"><span>Som</span><input type="checkbox" id="opt-sound" ${settings.sound ? 'checked' : ''}></label>
-      <div class="toggle"><span>Cor das pedras</span><span class="theme-pick">
-        <button data-theme="marfim" class="${settings.tileTheme === 'marfim' ? 'on' : ''}"><i style="background:#fbf7ec"></i>Marfim</button>
-        <button data-theme="caramelo" class="${settings.tileTheme === 'caramelo' ? 'on' : ''}"><i style="background:#b98858"></i>Caramelo</button>
-      </span></div>
+      <div class="theme-row"><span>Cor das pedras</span><div class="theme-pick">
+        ${Object.entries(THEME_NAMES).map(([key, label]) => `<button data-theme="${key}" class="${settings.tileTheme === key ? 'on' : ''}" aria-label="${label}">${singleTileSvg([5, 3], true, key)}<small>${label}</small></button>`).join('')}
+      </div></div>
       <label class="toggle"><span>Pintas coloridas</span><input type="checkbox" id="opt-colors" ${settings.coloredPips ? 'checked' : ''}></label>
       ${isLocal ? `
       <label class="toggle"><span>Jogadas rápidas</span><input type="checkbox" id="opt-fast" ${settings.speed === 'fast' ? 'checked' : ''}></label>

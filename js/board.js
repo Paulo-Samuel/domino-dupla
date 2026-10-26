@@ -25,7 +25,21 @@ export const TILE_THEMES = {
     body: '#b98858', edge: '#8a5f36', fresh: '#d9a874', divider: '#f4efe4', pin: '#c9ccd2', plain: '#1b1b1b',
     pips: { 0: '#3a2614', 1: '#f7f4ec', 2: '#1b1b1b', 3: '#1f5fd6', 4: '#2fb84a', 5: '#f5b70f', 6: '#c8102e' },
   },
+  // Pedras escuras: pintas claras e vivas para aparecer bem.
+  preto: {
+    body: '#1f1f22', edge: '#000000', fresh: '#3d3a2c', divider: '#d9d9d9', pin: '#c9ccd2', plain: '#f7f4ec',
+    pips: { 0: '#d9d9d9', 1: '#f7f4ec', 2: '#ffd60a', 3: '#4cc9f0', 4: '#57cc99', 5: '#ff9f1c', 6: '#ff4d6d' },
+  },
+  azul: {
+    body: '#1d4fa0', edge: '#123572', fresh: '#2f66c2', divider: '#f1f1f1', pin: '#c9ccd2', plain: '#f7f4ec',
+    pips: { 0: '#dce6f7', 1: '#ffffff', 2: '#ffd60a', 3: '#ff8fab', 4: '#80ed99', 5: '#ff9f1c', 6: '#1b1b1b' },
+  },
+  vermelho: {
+    body: '#b3202a', edge: '#7c141b', fresh: '#cf3a44', divider: '#f4efe4', pin: '#c9ccd2', plain: '#f7f4ec',
+    pips: { 0: '#ffe3e3', 1: '#ffffff', 2: '#ffd60a', 3: '#8ecae6', 4: '#80ed99', 5: '#1b1b1b', 6: '#f3b4ff' },
+  },
 };
+export const THEME_NAMES = { marfim: 'Marfim', caramelo: 'Caramelo', preto: 'Preto', azul: 'Azul', vermelho: 'Vermelho' };
 export const PIP_COLORS = TILE_THEMES.marfim.pips;
 let theme = TILE_THEMES.marfim;
 let coloredPips = true;
@@ -36,7 +50,8 @@ export function setTileTheme(name) {
   theme = TILE_THEMES[name] ?? TILE_THEMES.marfim;
   return theme;
 }
-export const pipColor = (value) => (coloredPips ? theme.pips[value] : theme.plain);
+const pipOf = (th, value) => (coloredPips ? th.pips[value] : th.plain);
+export const pipColor = (value) => pipOf(theme, value);
 
 function layoutArm(arm, opts) {
   const { xMin, xMax, vdir } = opts;
@@ -109,9 +124,9 @@ export function layoutBoard(board, halfWidth = 7) {
   return { tiles, anchors, bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY } };
 }
 
-function pipsSvg(value, x, y, size) {
+function pipsSvg(value, x, y, size, th = theme) {
   const r = size * 0.1;
-  const fill = pipColor(value);
+  const fill = pipOf(th, value);
   return PIP_SPOTS[value]
     .map(([px, py]) => `<circle class="pip" fill="${fill}" cx="${x + px * size}" cy="${y + py * size}" r="${r}"/>`)
     .join('');
@@ -121,7 +136,7 @@ function pipsSvg(value, x, y, size) {
 // As cores vão também como atributos do SVG, para a pedra aparecer mesmo se o
 // CSS falhar; a sombra é um retângulo (o Safari pode sumir com elementos SVG
 // que usam filter: drop-shadow).
-export function tileSvg({ x, y, w, h, a, b }, extraClass = '') {
+export function tileSvg({ x, y, w, h, a, b }, extraClass = '', th = theme) {
   const vertical = h > w;
   const half = vertical ? w : h;
   const inset = half * 0.06;
@@ -129,46 +144,49 @@ export function tileSvg({ x, y, w, h, a, b }, extraClass = '') {
   const bx = vertical ? x : x + half;
   const by = vertical ? y + half : y;
   const divider = vertical
-    ? `<line class="divider" stroke="${theme.divider}" stroke-width="${half * 0.045}" x1="${x + half * 0.15}" y1="${y + half}" x2="${x + w - half * 0.15}" y2="${y + half}"/>`
-    : `<line class="divider" stroke="${theme.divider}" stroke-width="${half * 0.045}" x1="${x + half}" y1="${y + half * 0.15}" x2="${x + half}" y2="${y + h - half * 0.15}"/>`;
-  const pin = theme.pin
-    ? `<circle class="pin" fill="${theme.pin}" stroke="#6b6f76" stroke-width="${half * 0.02}" cx="${vertical ? x + w / 2 : x + half}" cy="${vertical ? y + half : y + h / 2}" r="${half * 0.08}"/>`
+    ? `<line class="divider" stroke="${th.divider}" stroke-width="${half * 0.045}" x1="${x + half * 0.15}" y1="${y + half}" x2="${x + w - half * 0.15}" y2="${y + half}"/>`
+    : `<line class="divider" stroke="${th.divider}" stroke-width="${half * 0.045}" x1="${x + half}" y1="${y + half * 0.15}" x2="${x + half}" y2="${y + h - half * 0.15}"/>`;
+  const pin = th.pin
+    ? `<circle class="pin" fill="${th.pin}" stroke="#6b6f76" stroke-width="${half * 0.02}" cx="${vertical ? x + w / 2 : x + half}" cy="${vertical ? y + half : y + h / 2}" r="${half * 0.08}"/>`
     : '';
   const fresh = extraClass.includes('fresh');
   const body = `x="${x + inset / 2}" y="${y + inset / 2}" width="${w - inset}" height="${h - inset}" rx="${half * 0.14}"`;
   return `<g class="tile ${extraClass}">
     <rect class="tile-shadow" fill="rgba(0,0,0,.35)" transform="translate(0 ${half * 0.05})" ${body}/>
-    <rect class="tile-body" fill="${fresh ? theme.fresh : theme.body}" stroke="${fresh ? '#ffd166' : theme.edge}" stroke-width="${half * (fresh ? 0.06 : 0.04)}" ${body}/>
+    <rect class="tile-body" fill="${fresh ? th.fresh : th.body}" stroke="${fresh ? '#ffd166' : th.edge}" stroke-width="${half * (fresh ? 0.06 : 0.04)}" ${body}/>
     ${divider}${pin}
-    ${pipsSvg(a, ax, ay, half)}${pipsSvg(b, bx, by, half)}
+    ${pipsSvg(a, ax, ay, half, th)}${pipsSvg(b, bx, by, half, th)}
   </g>`;
 }
 
 // anchors: lados ('left'/'right') onde a pedra escolhida pode encaixar; cada
 // um mostra o número da ponta. ends: [esquerda, direita] da mesa.
 // Quantas meias-pedras cabem em cada fileira da cobra, e o enquadramento.
-function frame(board, halfWidth, aspect) {
+function frame(board, halfWidth, aspect, minView) {
   const layout = layoutBoard(board, halfWidth);
   const pad = 0.25;
   const { bbox } = layout;
   // Enquadra a cobra com folga: no começo as pedras ficam grandes e a mesa
-  // vai afastando a câmera conforme cresce (nunca mais perto que ~3 pedras).
-  const minW = Math.min(halfWidth * 2, 6) + pad * 2;
+  // vai afastando a câmera conforme cresce (nunca mais perto que ~3 pedras,
+  // nem que `minView` meias-pedras de largura).
+  const minW = Math.max(Math.min(halfWidth * 2, 6) + pad * 2, minView);
   const needW = Math.max(minW, bbox.w + pad * 2);
   const needH = bbox.h + pad * 2;
   const vw = Math.max(needW, needH * aspect);
   return { layout, vw, vh: vw / aspect };
 }
 
-export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: showAnchors, ends = null } = {}) {
-  // Escolhe a largura de fileira que deixa as pedras maiores na mesa atual
-  // (no empate, fica a mais perto da sugerida, para a cobra mudar pouco).
+// widthPx: largura da mesa na tela; limita a meia-pedra a ~36px para a cobra
+// se espalhar pela mesa em telas largas em vez de virar pedras gigantes.
+export function boardSvg(board, { halfWidth = 7, aspect = 1, widthPx = 0, freshId, anchors: showAnchors, ends = null } = {}) {
+  const minView = widthPx / 36;
+  // Escolhe a largura de fileira que deixa as pedras maiores na mesa atual;
+  // no empate, a fileira mais larga, para a cobra se espalhar até os jogadores.
   let best = null;
-  for (let hw = 3; hw <= 10; hw++) {
-    const f = frame(board, hw, aspect);
-    const better = !best || f.vw < best.vw - 0.01
-      || (Math.abs(f.vw - best.vw) <= 0.01 && Math.abs(hw - halfWidth) < Math.abs(best.hw - halfWidth));
-    if (better) best = { ...f, hw };
+  for (let hw = 3; hw <= Math.max(halfWidth, 14); hw++) {
+    const f = frame(board, hw, aspect, minView);
+    if (!best || f.vw < best.vw - 0.01) best = { ...f, hw, floor: f.vw };
+    else if (f.vw <= best.floor + 0.01) best = { ...f, hw, floor: best.floor };
   }
   const { layout, vw, vh } = best;
   const { bbox } = layout;
@@ -203,8 +221,9 @@ export function boardSvg(board, { halfWidth = 7, aspect = 1, freshId, anchors: s
   return `<svg class="board-svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${tiles}${anchorMarkup}</svg>`;
 }
 
-export function singleTileSvg(tile, vertical = true) {
+export function singleTileSvg(tile, vertical = true, themeName = null) {
   const box = vertical ? { x: 0, y: 0, w: 1, h: 2 } : { x: 0, y: 0, w: 2, h: 1 };
+  const th = (themeName && TILE_THEMES[themeName]) || theme;
   // width fixo é só o tamanho reserva sem CSS; o CSS usa width 100% e altura automática.
-  return `<svg width="${box.w * 20}" viewBox="0 0 ${box.w} ${box.h}" xmlns="http://www.w3.org/2000/svg">${tileSvg({ ...box, a: tile[0], b: tile[1] })}</svg>`;
+  return `<svg width="${box.w * 20}" viewBox="0 0 ${box.w} ${box.h}" xmlns="http://www.w3.org/2000/svg">${tileSvg({ ...box, a: tile[0], b: tile[1] }, '', th)}</svg>`;
 }
