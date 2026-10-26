@@ -37,7 +37,7 @@ jobs:
       - name: Separar só os arquivos do site
         run: |
           mkdir -p _site
-          cp -r index.html style.css sw.js manifest.webmanifest js icons paulo-adm _site/
+          cp -r index.html style.css sw.js manifest.webmanifest js icons paulo-adm portal _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

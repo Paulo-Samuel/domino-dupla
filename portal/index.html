@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Portal de Jogos Adaptados & Acessibilidade: jogos digitais, de mesa e esportes adaptados para acessibilidade motora, visual, auditiva, cognitiva e cooperativa.">
+<meta name="theme-color" content="#1E293B">
+<title>Acessibilidade nos Jogos</title>
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#F8FAFC;--surface:#fff;--ink:#1E293B;--ink2:#475569;--line:#E2E8F0;--soft:#F1F5F9;
+  --hero1:#1E293B;--hero2:#334155;--accent:#38BDF8;--accent-ink:#0369A1;
+  --c0:#F97316;--c1:#0EA5E9;--c2:#8B5CF6;--c3:#10B981;--c4:#EC4899;
+  --shadow:0 8px 28px rgba(15,23,42,.10);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0B1220;--surface:#131C2E;--ink:#F1F5F9;--ink2:#A8B5C9;--line:#26324A;--soft:#18233A;--accent-ink:#7DD3FC;--shadow:0 8px 28px rgba(0,0,0,.45)}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Roboto,"Segoe UI",system-ui,-apple-system,sans-serif}
+a{color:var(--accent-ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 14px;border-radius:8px;z-index:100}
+.skip:focus{left:8px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* menu: só os nomes dos integrantes */
+.top{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--hero1) 94%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.08)}
+.top .wrap{display:flex;align-items:center;gap:6px;overflow-x:auto;min-height:56px;scrollbar-width:none}
+.top .home{color:#fff;font-weight:700;text-decoration:none;margin-right:10px;white-space:nowrap}
+.top a.m{color:#CBD5E1;text-decoration:none;padding:8px 14px;border-radius:999px;white-space:nowrap;font-weight:500;transition:background .2s,color .2s}
+.top a.m:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* hero */
+.hero{background:radial-gradient(1100px 500px at 85% -10%,rgba(56,189,248,.28),transparent 60%),radial-gradient(800px 400px at 0% 110%,rgba(139,92,246,.28),transparent 60%),linear-gradient(135deg,var(--hero1),var(--hero2));color:#F8FAFC;padding:72px 0 88px;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.1;margin:.2em 0 .4em;letter-spacing:-.02em}
+.hero h1 span{background:linear-gradient(90deg,#7DD3FC,#C4B5FD);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:640px;color:#CBD5E1;font-size:1.12rem}
+.eyebrow{font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--accent-ink);margin:0 0 4px}
+.hero .eyebrow{color:#7DD3FC}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-block;padding:13px 22px;border-radius:12px;font-weight:700;text-decoration:none;border:2px solid transparent;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.p{background:#38BDF8;color:#0B1220}
+.btn.s{border-color:rgba(255,255,255,.4);color:#fff}
+.dice{position:absolute;right:4%;top:50%;transform:translateY(-50%);font-size:clamp(5rem,16vw,11rem);opacity:.13;pointer-events:none;user-select:none}
+
+/* cards de áreas */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:-48px;position:relative}
+.card{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:16px;padding:18px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:transform .18s}
+.card:hover{transform:translateY(-4px)}
+.card strong{font-size:1.05rem}.card span:last-child{color:var(--ink2);font-size:.92rem}
+.badge{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:color-mix(in srgb,var(--c) 18%,transparent);font-size:1.5rem;margin-bottom:6px}
+.c0{--c:var(--c0)}.c1{--c:var(--c1)}.c2{--c:var(--c2)}.c3{--c:var(--c3)}.c4{--c:var(--c4)}
+
+h2{font-size:clamp(1.4rem,3vw,1.9rem);line-height:1.2;margin:.1em 0 0}
+.block{padding:64px 0 8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+.stat b{display:block;font-size:2rem;color:var(--accent-ink)}
+.stat span{color:var(--ink2);font-size:.9rem}
+
+/* áreas */
+.area{margin-top:48px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:20px;padding:28px;box-shadow:var(--shadow)}
+.area-head{display:flex;gap:16px;align-items:center}
+.area-head .badge{width:56px;height:56px;font-size:1.8rem;flex:none;margin:0}
+.area-head .eyebrow{color:var(--c)}
+.lead{color:var(--ink2);max-width:75ch}
+.tablewrap{overflow-x:auto;margin-top:18px;border-radius:14px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:.95rem;line-height:1.5}
+caption{position:absolute;left:-9999px}
+thead th{background:var(--ink);color:var(--bg);text-align:left;padding:12px 14px}
+tbody th,tbody td{padding:13px 14px;vertical-align:top;text-align:left;border-top:1px solid var(--line)}
+tbody th{width:20%;color:var(--ink)}
+tbody tr:nth-child(even){background:var(--soft)}
+tbody tr:hover{background:color-mix(in srgb,var(--c) 10%,transparent)}
+.pill{display:inline-block;background:color-mix(in srgb,var(--c) 16%,transparent);border-radius:999px;padding:2px 10px;margin:2px 0;font-size:.8rem;white-space:nowrap}
+@media (max-width:680px){
+  .area{padding:20px}
+  thead{display:none}
+  table,tbody,tr,th,td{display:block;width:auto!important}
+  tbody tr{padding:10px 0;border-top:1px solid var(--line)}
+  tbody th,tbody td{border:0;padding:4px 14px}
+  td::before{content:attr(data-l);display:block;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
+}
+
+/* hardware */
+.hw{margin-top:64px;background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#F1F5F9;border-radius:24px;padding:36px}
+.hw h2{color:#fff}.hw .eyebrow{color:#7DD3FC}
+.hwgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:22px}
+.hwcard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:20px}
+.hwcard h3{margin:.2em 0 .4em;font-size:1.08rem}.hwcard p{margin:0;color:#CBD5E1;font-size:.95rem}
+.hwcard .ic{font-size:1.9rem}
+
+/* protótipo */
+.proto{margin-top:48px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:var(--shadow)}
+.track{position:relative;height:64px;border-radius:14px;background:var(--soft);border:2px dashed var(--line);margin:18px 0 12px;overflow:hidden;cursor:pointer;touch-action:manipulation;user-select:none}
+.zone{position:absolute;top:0;bottom:0;background:rgba(16,185,129,.35);border-left:3px solid #10B981;border-right:3px solid #10B981}
+.mark{position:absolute;top:8px;bottom:8px;width:14px;border-radius:7px;background:#F59E0B;box-shadow:0 0 0 3px rgba(245,158,11,.3)}
+.msg{font-weight:700;min-height:1.6em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sp{border:2px solid var(--line);background:var(--soft);color:var(--ink);padding:8px 16px;border-radius:999px;font:inherit;cursor:pointer}
+.sp[aria-pressed=true]{border-color:var(--accent-ink);background:var(--accent);color:#0B1220;font-weight:700}
+
+/* links */
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:20px}
+.link{display:block;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:transform .15s,border-color .15s}
+.link:hover{transform:translateY(-3px);border-color:var(--accent-ink)}
+.link b{display:block;color:var(--accent-ink)}.link span{color:var(--ink2);font-size:.92rem}
+
+footer{margin-top:72px;background:var(--hero1);color:#CBD5E1;padding:36px 0;text-align:center}
+footer strong{color:#fff}
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<header class="top"><nav class="wrap" aria-label="Integrantes">
+<a class="home" href="#inicio">♿ Acessibilidade nos Jogos</a>
+<a href="#paulo">Paulo Samuel</a><a href="#diego">Diego</a><a href="#guilherme">Guilherme</a><a href="#daniel">Daniel</a><a href="#beatriz">Beatriz</a>
+</nav></header>
+
+<main id="conteudo">
+<section class="hero" id="inicio">
+<div class="dice" aria-hidden="true">🎲</div>
+<div class="wrap">
+<p class="eyebrow">Portal de Jogos Adaptados & Acessibilidade</p>
+<h1>Jogar é para <span>todo mundo</span></h1>
+<p>Bem-vindo ao Portal. Aqui reunimos jogos digitais, de mesa e esportes adaptados para diferentes necessidades: acessibilidade motora, visual, auditiva, cognitiva e jogos cooperativos inclusivos. Também apresentamos controles adaptáveis, rastreamento ocular, sopro e sucção e adaptações em impressão 3D.</p>
+<div class="btns"><a class="btn p" href="#areas">Explorar as áreas</a><a class="btn s" href="#hardware">Hardware & tecnologias</a><a class="btn s" href="#jogue">Experimente</a></div>
+</div>
+</section>
+
+<div class="wrap">
+<div class="cards" id="areas"><a class="card c0" href="#paulo"><span class="badge" aria-hidden="true">🦾</span><strong>Motora</strong><span>Paulo Samuel</span></a><a class="card c1" href="#diego"><span class="badge" aria-hidden="true">👁️</span><strong>Visual</strong><span>Diego</span></a><a class="card c2" href="#guilherme"><span class="badge" aria-hidden="true">👂</span><strong>Auditiva</strong><span>Guilherme</span></a><a class="card c3" href="#daniel"><span class="badge" aria-hidden="true">🧠</span><strong>Cognitiva</strong><span>Daniel</span></a><a class="card c4" href="#beatriz"><span class="badge" aria-hidden="true">🤝</span><strong>Cooperativos</strong><span>Beatriz</span></a></div>
+
+<section class="block" id="sobre">
+<div class="grid2">
+<div><p class="eyebrow">Por que isso importa</p><h2>Acessibilidade não é um extra: é o que deixa o jogo jogável</h2>
+<p>Segundo a Organização Mundial da Saúde, mais de 1 bilhão de pessoas vivem com algum tipo de deficiência. Opções como remapear botões, legendas direcionais, modos de assistência e regras simples permitem que mais gente participe da mesma partida, no mesmo sofá ou na mesma mesa.</p>
+<p>Este portal mostra exemplos reais de cada área, com o que cada jogo faz de especial e em quais plataformas encontrar.</p></div>
+<div class="stats" role="list">
+<div class="stat" role="listitem"><b>5</b><span>áreas de acessibilidade</span></div>
+<div class="stat" role="listitem"><b>25</b><span>jogos e atividades</span></div>
+<div class="stat" role="listitem"><b>3</b><span>tipos: digital, mesa e esporte</span></div>
+</div></div>
+</section>
+
+<section class="area c0" id="paulo" aria-labelledby="h-paulo">
+<div class="area-head"><span class="badge" aria-hidden="true">🦾</span><div><p class="eyebrow">Paulo Samuel · Motora</p><h2 id="h-paulo">Foco: Acessibilidade Motora, Mobilidade Reduzida e Jogabilidade Simplificada</h2></div></div>
+<p class="lead">A acessibilidade motora envolve a adaptação de esquemas de controle para pessoas com amputações, paralisia cerebral, lesões medulares, distrofia muscular ou limitação de amplitude de movimento. O objetivo é permitir o mapeamento total de botões, suporte a acionadores externos e mecânicas de um único toque.</p>
+<div class="tablewrap"><table><caption>Jogos e atividades com acessibilidade motora</caption><thead><tr><th scope="col">Jogo / Atividade</th><th scope="col">Descrição</th><th scope="col">Adaptações de destaque</th><th scope="col">Plataformas</th></tr></thead><tbody><tr><th scope="row">Forza Motorsport / Horizon 5</th><td data-l="Descrição">Automobilismo e simulação de corrida.</td><td data-l="Adaptações de destaque">Piloto Automático avançado, frenagem/aceleração assistida, controle por um analógico ou acionador único.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Xbox Series X/S</span> </td></tr><tr><th scope="row">One-Finger Death Punch 2</th><td data-l="Descrição">Jogo de ação e combate de ritmo frenético.</td><td data-l="Adaptações de destaque">Jogabilidade 100% executada utilizando apenas dois botões/acionadores, sem necessidade de direcionais complexos.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>PS4</span> <span class=pill>Xbox One</span> <span class=pill>Switch</span> </td></tr><tr><th scope="row">Civilization VI</th><td data-l="Descrição">Estratégia por turnos em grande escala.</td><td data-l="Adaptações de destaque">Sem exigência de tempo de resposta ou reflexos; suporte completo a navegação por mouse/trackball, oculometria ou um clique.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>iOS</span> <span class=pill>Android</span> <span class=pill>Consoles</span> </td></tr><tr><th scope="row">Bocha Adaptada</th><td data-l="Descrição">Modalidade esportiva para atletas com severas limitações motoras.</td><td data-l="Adaptações de destaque">Uso de calhas (rampas), ponteiras de cabeça ou boca para lançamento preciso das esferas.</td><td data-l="Plataformas"><span class=pill>Esporte Físico / Paralímpico</span> </td></tr><tr><th scope="row">Dominó com Suporte</th><td data-l="Descrição">Jogo de mesa clássico de estratégia.</td><td data-l="Adaptações de destaque">Suportes em calha para peças e engrossadores de pegada, dispensando a necessidade de segurar as peças com as mãos.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr></tbody></table></div>
+</section>
+<section class="area c1" id="diego" aria-labelledby="h-diego">
+<div class="area-head"><span class="badge" aria-hidden="true">👁️</span><div><p class="eyebrow">Diego · Visual</p><h2 id="h-diego">Foco: Acessibilidade Visual e Áudio-Games 3D</h2></div></div>
+<p class="lead">A acessibilidade visual atende jogadores com cegueira total, baixa visão ou daltonismo. Depende de recursos como leitores de tela integrados, áudio binaural 3D para navegação espacial, alto contraste personalizável e feedback tátil avançado.</p>
+<div class="tablewrap"><table><caption>Jogos e atividades com acessibilidade visual</caption><thead><tr><th scope="col">Jogo / Atividade</th><th scope="col">Descrição</th><th scope="col">Adaptações de destaque</th><th scope="col">Plataformas</th></tr></thead><tbody><tr><th scope="row">The Last of Us Part I &amp; II</th><td data-l="Descrição">Aventura e ação narrativa em mundo pós-apocalíptico.</td><td data-l="Adaptações de destaque">Mais de 60 opções de acessibilidade: navegação por áudio 3D, mira assistida por som, leitura de tela integral (Text-to-Speech).</td><td data-l="Plataformas"><span class=pill>PS5</span> <span class=pill>PC</span> </td></tr><tr><th scope="row">A Blind Legend</th><td data-l="Descrição">Jogo de ação e aventura hack-and-slash sem elementos visuais.</td><td data-l="Adaptações de destaque">Interface baseada 100% em áudio binaural tridimensional; guiado exclusivamente pela audição.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>iOS</span> <span class=pill>Android</span> </td></tr><tr><th scope="row">Mortal Kombat 1 / Street Fighter 6</th><td data-l="Descrição">Jogos competitivos de luta 2D.</td><td data-l="Adaptações de destaque">Pistas sonoras detalhadas para distância do oponente, tipo de ataque (alto/médio/baixo) e status da barra de especial.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>PS5</span> <span class=pill>Xbox Series X/S</span> </td></tr><tr><th scope="row">Xadrez Tátil</th><td data-l="Descrição">Jogo de tabuleiro tradicional adaptado.</td><td data-l="Adaptações de destaque">Casas pretas elevadas, peças com marcações em relevo no topo e encaixes fixos em cada casa do tabuleiro.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr><tr><th scope="row">Golbol (Goalball)</th><td data-l="Descrição">Esporte coletivo desenvolvido para pessoas com deficiência visual.</td><td data-l="Adaptações de destaque">Bola com guizos internos para rastreamento acústico e marcações em relevo no piso da quadra.</td><td data-l="Plataformas"><span class=pill>Esporte Físico / Paralímpico</span> </td></tr></tbody></table></div>
+</section>
+<section class="area c2" id="guilherme" aria-labelledby="h-guilherme">
+<div class="area-head"><span class="badge" aria-hidden="true">👂</span><div><p class="eyebrow">Guilherme · Auditiva</p><h2 id="h-guilherme">Foco: Acessibilidade Auditiva e Pistas Visuais</h2></div></div>
+<p class="lead">A acessibilidade auditiva é voltada para jogadores surdos ou com deficiência auditiva. A tradução do áudio em elementos visuais claros é fundamental, incluindo legendas descritivas (CC), indicação de direção de som, feedback tátil por vibração e comunicação textual sem dependência de chat de voz.</p>
+<div class="tablewrap"><table><caption>Jogos e atividades com acessibilidade auditiva</caption><thead><tr><th scope="col">Jogo / Atividade</th><th scope="col">Descrição</th><th scope="col">Adaptações de destaque</th><th scope="col">Plataformas</th></tr></thead><tbody><tr><th scope="row">Minecraft</th><td data-l="Descrição">Sandbox de construção e exploração.</td><td data-l="Adaptações de destaque">Legendas direcionais exibidas na tela com indicação do tipo de som e seta de origem (ex: <i>Passos à esquerda</i>).</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Consoles</span> <span class=pill>Mobile</span> </td></tr><tr><th scope="row">Fortnite</th><td data-l="Descrição">Battle royale competitivo multiplayer.</td><td data-l="Adaptações de destaque">Radar visual na tela (Visualizador de Som) indicando passos de inimigos, tiros e veículos próximos em 360°.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Consoles</span> <span class=pill>Mobile</span> </td></tr><tr><th scope="row">Hi-Fi RUSH</th><td data-l="Descrição">Jogo de ação e combate baseado em ritmo.</td><td data-l="Adaptações de destaque">Indicadores visuais constantes na interface e no cenário acompanhando a batida da música, dispensando a audição.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Xbox Series X/S</span> <span class=pill>PS5</span> </td></tr><tr><th scope="row">Dixit</th><td data-l="Descrição">Jogo de cartas com ilustrações conceituais.</td><td data-l="Adaptações de destaque">Dinâmica de jogo totalmente baseada em percepção visual, interpretação de imagens e pistas escritas.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr><tr><th scope="row">Dobble</th><td data-l="Descrição">Jogo de observação e velocidade de reação.</td><td data-l="Adaptações de destaque">Identificação e associação de símbolos idênticos entre cartas, sem dependência de componentes sonoros.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr></tbody></table></div>
+</section>
+<section class="area c3" id="daniel" aria-labelledby="h-daniel">
+<div class="area-head"><span class="badge" aria-hidden="true">🧠</span><div><p class="eyebrow">Daniel · Cognitiva</p><h2 id="h-daniel">Foco: Acessibilidade Cognitiva e Neurodiversidade</h2></div></div>
+<p class="lead">A acessibilidade cognitiva atende jogadores neurodivergentes (Autismo, TDAH, Dislexia, Síndrome de Down) ou com dificuldades de processamento de informação. Foca em ambientes sem pressão de tempo, interfaces limpas, fontes dislexia-friendly, níveis flexíveis de dificuldade e controle sobre estímulos sensoriais.</p>
+<div class="tablewrap"><table><caption>Jogos e atividades com acessibilidade cognitiva</caption><thead><tr><th scope="col">Jogo / Atividade</th><th scope="col">Descrição</th><th scope="col">Adaptações de destaque</th><th scope="col">Plataformas</th></tr></thead><tbody><tr><th scope="row">Animal Crossing: New Horizons</th><td data-l="Descrição">Simulação de vida e comunidade.</td><td data-l="Adaptações de destaque">Ritmo livre sem punições por inatividade, rotinas previsíveis e ausência de requisitos de tempo de reação.</td><td data-l="Plataformas"><span class=pill>Nintendo Switch</span> </td></tr><tr><th scope="row">Townscaper</th><td data-l="Descrição">Construtor urbano minimalista e relaxante.</td><td data-l="Adaptações de destaque">Sem objetivos, sem gerenciamento de recursos, sem possibilidade de erro; geração de cenários com cliques simples.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Switch</span> <span class=pill>Mobile</span> <span class=pill>Xbox</span> </td></tr><tr><th scope="row">Celeste (Assist Mode)</th><td data-l="Descrição">Jogo de plataforma desafiador.</td><td data-l="Adaptações de destaque">Modo de Assistência altamente customizável: ajuste de velocidade do jogo, pulo duplo infinito ou invencibilidade.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Consoles</span> </td></tr><tr><th scope="row">Cara a Cara (Adaptado)</th><td data-l="Descrição">Jogo de dedução lógica por eliminação.</td><td data-l="Adaptações de destaque">Uso de pictogramas, cores estruturadas e perguntas diretas para treino de categorização lógica.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr><tr><th scope="row">Lince Adaptado</th><td data-l="Descrição">Jogo de rastreamento e associação visual.</td><td data-l="Adaptações de destaque">Tabuleiro com densidade de imagens reduzida para evitar sobrecarga sensorial e facilitar a concentração.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr></tbody></table></div>
+</section>
+<section class="area c4" id="beatriz" aria-labelledby="h-beatriz">
+<div class="area-head"><span class="badge" aria-hidden="true">🤝</span><div><p class="eyebrow">Beatriz · Cooperativos</p><h2 id="h-beatriz">Foco: Jogos Cooperativos Inclusivos e Multissensoriais</h2></div></div>
+<p class="lead">Jogos focados em cooperação, comunicação alternativa e experiências multissensoriais. Permitem que jogadores com diferentes níveis de habilidade joguem juntos, dividindo tarefas ou compartilhando comandos de forma integrativa.</p>
+<div class="tablewrap"><table><caption>Jogos cooperativos inclusivos</caption><thead><tr><th scope="col">Jogo / Atividade</th><th scope="col">Descrição</th><th scope="col">Adaptações de destaque</th><th scope="col">Plataformas</th></tr></thead><tbody><tr><th scope="row">Overcooked! All You Can Eat</th><td data-l="Descrição">Culinária cooperativa em equipe.</td><td data-l="Adaptações de destaque">Opção de estender o tempo das rodadas, aumentar pontuações, pular fases e simplificar receitas.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Consoles</span> </td></tr><tr><th scope="row">It Takes Two</th><td data-l="Descrição">Aventura cooperativa em tela dividida.</td><td data-l="Adaptações de destaque">Integração nativa com o recurso <i>Co-Pilot</i> (dois controles atuando como um único jogador) e minijogos acessíveis.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Consoles</span> </td></tr><tr><th scope="row">Unpacking</th><td data-l="Descrição">Jogo de quebra-cabeça narrativo sobre organização.</td><td data-l="Adaptações de destaque">Sem limite de tempo, sem pontuação, experiência tátil e auditiva relaxante e personalizável.</td><td data-l="Plataformas"><span class=pill>PC</span> <span class=pill>Consoles</span> <span class=pill>Mobile</span> </td></tr><tr><th scope="row">Bandido</th><td data-l="Descrição">Jogo cooperativo de cartas para bloqueio de rotas.</td><td data-l="Adaptações de destaque">Regras simples, trabalho em equipe sem eliminação de jogadores e alta acessibilidade visual/espacial.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr><tr><th scope="row">The Mind</th><td data-l="Descrição">Jogo cooperativo de sincronização mental.</td><td data-l="Adaptações de destaque">Jogabilidade sem comunicação verbal, focada em ritmo, percepção temporal e empatia entre o grupo.</td><td data-l="Plataformas"><span class=pill>Jogo de Mesa Analógico</span> </td></tr></tbody></table></div>
+</section>
+
+<section class="hw" id="hardware" aria-labelledby="h-hw">
+<p class="eyebrow">Hardware & Tecnologias Assistivas</p>
+<h2 id="h-hw">Quando o controle padrão não basta</h2>
+<p style="max-width:70ch;color:#CBD5E1">Além das opções dentro dos jogos, há equipamentos que mudam a forma de controlar o que acontece na tela.</p>
+<div class="hwgrid">
+<article class="hwcard"><div class="ic" aria-hidden="true">🎮</div><h3>Controles adaptáveis</h3><p>Hubs com portas para acionadores externos, botões grandes e joysticks alternativos, como o Xbox Adaptive Controller e o PlayStation Access Controller, que se encaixam em cada necessidade motora.</p></article>
+<article class="hwcard"><div class="ic" aria-hidden="true">👀</div><h3>Rastreamento ocular</h3><p>Sensores que acompanham o olhar e transformam o ponto observado em mira, cursor ou clique. Úteis para quem tem pouca ou nenhuma mobilidade nas mãos.</p></article>
+<article class="hwcard"><div class="ic" aria-hidden="true">💨</div><h3>Sopro e sucção</h3><p>Dispositivos controlados pela respiração: soprar e sugar equivalem a cliques e direcionais, como no QuadStick, usado por pessoas com tetraplegia.</p></article>
+<article class="hwcard"><div class="ic" aria-hidden="true">🖨️</div><h3>Impressão 3D</h3><p>Engrossadores de pegada, suportes de peças de dominó, adaptadores de joystick e tabuleiros em relevo, feitos sob medida e de baixo custo.</p></article>
+</div>
+</section>
+
+<section class="proto" id="jogue" aria-labelledby="h-proto">
+<p class="eyebrow">Experimente · Protótipo</p>
+<h2 id="h-proto">Desafio do Acionador Único</h2>
+<p class="lead">Um jogo de um botão só, como os que funcionam com acionadores externos. Clique, toque na faixa ou aperte qualquer tecla quando o marcador amarelo estiver na zona verde. Sem pressa: escolha a velocidade.</p>
+<div class="row" role="group" aria-label="Velocidade">
+<button class="sp" data-v="0.35" aria-pressed="false">Lenta</button>
+<button class="sp" data-v="0.6" aria-pressed="true">Média</button>
+<button class="sp" data-v="1" aria-pressed="false">Rápida</button>
+<span style="margin-left:auto">Pontos: <b id="pts">0</b></span>
+</div>
+<div class="track" id="track" role="button" tabindex="0" aria-label="Área do jogo. Acione para começar e para jogar."><div class="zone" id="zone"></div><div class="mark" id="mark"></div></div>
+<div class="msg" id="msg" aria-live="polite">Acione para começar.</div>
+<p style="margin-top:20px">Quer jogar uma partida de verdade? <a href="../index.html">Dominó em Dupla</a> é um jogo web gratuito para 4 jogadores, que roda no celular.</p>
+</section>
+
+<section class="block" id="links" aria-labelledby="h-links">
+<p class="eyebrow">Para saber mais</p><h2 id="h-links">Links e referências</h2>
+<div class="links">
+<a class="link" href="https://www.xbox.com/accessories/controllers/xbox-adaptive-controller" target="_blank" rel="noopener"><b>Xbox Adaptive Controller ↗</b><span>O controle adaptável da Microsoft.</span></a>
+<a class="link" href="https://www.playstation.com/accessories/access-controller/" target="_blank" rel="noopener"><b>PlayStation Access Controller ↗</b><span>Controle personalizável da Sony.</span></a>
+<a class="link" href="https://ablegamers.org" target="_blank" rel="noopener"><b>AbleGamers ↗</b><span>Organização que apoia jogadores com deficiência.</span></a>
+<a class="link" href="https://caniplaythat.com" target="_blank" rel="noopener"><b>Can I Play That? ↗</b><span>Análises de acessibilidade em jogos.</span></a>
+<a class="link" href="https://gameaccessibilityguidelines.com" target="_blank" rel="noopener"><b>Game Accessibility Guidelines ↗</b><span>Boas práticas para criar jogos acessíveis.</span></a>
+<a class="link" href="https://gaming.tobii.com" target="_blank" rel="noopener"><b>Tobii Gaming ↗</b><span>Rastreamento ocular para jogos.</span></a>
+<a class="link" href="https://www.quadstick.com" target="_blank" rel="noopener"><b>QuadStick ↗</b><span>Controle por boca, sopro e sucção.</span></a>
+<a class="link" href="https://www.who.int/health-topics/disability" target="_blank" rel="noopener"><b>OMS · Deficiência ↗</b><span>Dados e informações sobre deficiência.</span></a>
+</div>
+</section>
+</div>
+</main>
+
+<footer><div class="wrap">
+<p><strong>Portal de Jogos Adaptados & Acessibilidade</strong></p>
+<p>Paulo Samuel · Diego · Guilherme · Daniel · Beatriz</p>
+</div></footer>
+
+<script>
+(function(){
+  var track=document.getElementById('track'),mark=document.getElementById('mark'),zone=document.getElementById('zone'),
+      msg=document.getElementById('msg'),pts=document.getElementById('pts');
+  var pos=0,dir=1,speed=0.6,running=false,score=0,zw=0.22,zx=0.55,last=0;
+  function layout(){zone.style.left=(zx*100)+'%';zone.style.width=(zw*100)+'%';mark.style.left=(pos*(100-3))+'%'}
+  function newZone(){zx=0.1+Math.random()*(0.8-zw);layout()}
+  function tick(t){
+    if(!running)return;
+    var dt=last?(t-last)/1000:0;last=t;
+    pos+=dir*speed*dt;
+    if(pos>=1){pos=1;dir=-1}else if(pos<=0){pos=0;dir=1}
+    layout();requestAnimationFrame(tick)
+  }
+  function act(){
+    if(!running){running=true;last=0;msg.textContent='Valendo! Acione na zona verde.';requestAnimationFrame(tick);return}
+    var c=pos*0.97+0.015;
+    if(c>=zx&&c<=zx+zw){score++;pts.textContent=score;zw=Math.max(0.08,zw-0.01);msg.textContent='Acertou! 🎉';newZone()}
+    else msg.textContent='Quase! Tente de novo, sem pressa.'
+  }
+  track.addEventListener('click',act);
+  track.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();act()}});
+  document.querySelectorAll('.sp').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('.sp').forEach(function(x){x.setAttribute('aria-pressed','false')});
+    b.setAttribute('aria-pressed','true');speed=parseFloat(b.dataset.v)})});
+  newZone();
+})();
+</script>
+</body>
+</html>
